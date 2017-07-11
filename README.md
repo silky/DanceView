@@ -2,7 +2,9 @@
 
 More details to come.
 
-![From: [Evolution Of Dance](https://www.youtube.com/watch?v=dMH0bHeiRNg)](images/evolution_of_dance.gif)
+![](images/evolution_of_dance.gif)
+
+From: [Evolution Of Dance](https://www.youtube.com/watch?v=dMH0bHeiRNg).
 
 ### Usage
 
