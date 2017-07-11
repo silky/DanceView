@@ -18,7 +18,8 @@
 
 -- TODO:
 --
--- Body Rotation?
+-- Use "start" and "end" times.
+-- Body Rotation Options?
 -- Filter Out Non-Moving People?
 -- Some Kind Of Person Identification?
 
