@@ -110,7 +110,9 @@ main = do
 
 
 danceStep :: Options -> [Frame] -> Float -> Picture
-danceStep opts frames elapsed = Pictures paths
+danceStep opts frames elapsed = 
+    Pictures $ [translate (w/2) (h/2) $ color (greyN 0.8) $ rectangleSolid w h]
+             ++ paths
     where
         frame      = frames !! round (elapsed * (fps opts))
 
@@ -120,9 +122,11 @@ danceStep opts frames elapsed = Pictures paths
         keyPoints :: [[KeyPoint]]
         keyPoints  = concat $ map keyPointPaths components
 
-        top        = fromIntegral (height opts)
+        w = fromIntegral (width opts)
+        h = fromIntegral (height opts)
+
         points :: [[Point]]
-        points     = (map . map) (\(KeyPoint {..}) -> (x, top - y)) keyPoints
+        points     = (map . map) (\(KeyPoint {..}) -> (x, h - y)) keyPoints
         
         -- [Path ...]
         paths      = map line points
