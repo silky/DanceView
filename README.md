@@ -17,9 +17,8 @@ Supposing you've run OpenPose and have such an output directory.
 
 ### Misc
 
-#### Using `ffmpeg` to make high quality gifs
+`gifenc` usage:
 
 ```
-ffmpeg -y -i input.mkv -vf fps=10,scale=320:-1:flags=lanczos,palettegen palette.png
-ffmpeg -i input.mkv -i palette.png -filter_complex  "fps=10,scale=320:-1:flags=lanczos[x];[x][1:v]paletteuse" output.gif
+./gifenc ~/vokoscreen-2017-07-11_11-20-44.mkv out.gif 382 14.99
 ```
