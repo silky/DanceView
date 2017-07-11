@@ -111,9 +111,14 @@ main = do
 
 danceStep :: Options -> [Frame] -> Float -> Picture
 danceStep opts frames elapsed = 
-    Pictures $ [translate (w/2) (h/2) $ color (greyN 0.8) $ rectangleSolid w h]
-             ++ paths
+    Pictures $ [background, danceFloor] ++ bodies
     where
+        background = translate (w/2) (h/2) $ color (greyN 0.8) $ rectangleSolid w h
+        danceFloor = color azure $ polygon [ (w/9, h/2)
+                                           , (w - (w/9), h/2)
+                                           , (w,0)
+                                           , (0,0)
+                                           ]
         frame      = frames !! round (elapsed * (fps opts))
 
         components :: [Skeleton]
@@ -129,7 +134,7 @@ danceStep opts frames elapsed =
         points     = (map . map) (\(KeyPoint {..}) -> (x, h - y)) keyPoints
         
         -- [Path ...]
-        paths      = map line points
+        bodies     = map line points
 
 
 toSkeleton :: Person -> Skeleton
