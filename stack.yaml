@@ -1,0 +1,10 @@
+resolver: lts-8.21
+packages:
+    - .
+
+extra-deps:
+    - generic-lens-0.2.0.0
+
+flags: {}
+
+extra-package-dbs: []

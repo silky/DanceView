@@ -1,0 +1,28 @@
+name:                dance-view
+version:             0.1.0.0
+description:         Uses gloss to view the OpenPose pose annotations.
+homepage:            https://github.com/silky/dance-view#readme
+license:             BSD3
+author:              Noon van der Silk
+maintainer:          noonsilk@gmail.com
+copyright:           Noon van der Silk
+category:            Web
+extra-source-files:
+- README.md
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson
+  - bytestring
+  - filemanip
+  - generic-lens
+  - gloss
+  - optparse-generic
+  - split
+  - string-conv
+
+executables:
+  dance-view:
+    ghc-options:      -threaded -Wall -O2
+    source-dirs:      src
+    main:             Main.hs
