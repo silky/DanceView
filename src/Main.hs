@@ -133,7 +133,7 @@ danceStep opts frames elapsed =
         points :: [[Point]]
         points     = (map . map) (\(KeyPoint {..}) -> (x, h - y)) keyPoints
         
-        -- [Path ...]
+        bodies :: [Picture]
         bodies     = map line points
 
 
@@ -190,6 +190,8 @@ keyPointPaths (Skeleton {..}) =
 
 readFrame :: FilePath -> IO Frame
 readFrame f = do
+    -- Note: We strictly read here because otherwise we die from too many open
+    -- files. There's probably a nicer way to do this, but hey.
     file <- B.readFile f
 
     return $ fromMaybe (error $ "Couldn't load Frame from file: " ++ (show file))
