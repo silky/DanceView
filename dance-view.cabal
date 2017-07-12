@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           dance-view
-version:        0.1.0.0
+version:        0.1.0.1
 description:    Uses gloss to view the OpenPose pose annotations.
 category:       Web
 homepage:       https://github.com/silky/dance-view#readme
@@ -27,6 +27,9 @@ executable dance-view
       base >= 4.7 && < 5
     , aeson
     , bytestring
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
     , filemanip
     , generic-lens
     , gloss
