@@ -17,10 +17,13 @@ dependencies:
   - diagrams
   - diagrams-lib
   - diagrams-svg
+  - diagrams-cairo
+  - diagrams-contrib
   - filemanip
   - generic-lens
   - gloss
   - optparse-generic
+  - random
   - split
   - string-conv
 
@@ -29,3 +32,8 @@ executables:
     ghc-options:      -threaded -Wall -O2
     source-dirs:      src
     main:             Main.hs
+    other-modules:    
+        - Animation
+        - DanceView
+        - Data
+        - Montage

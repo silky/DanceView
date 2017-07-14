@@ -1,20 +1,14 @@
-{-# LANGUAGE DataKinds                 #-}
-{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE DuplicateRecordFields     #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedStrings         #-}
-{-# LANGUAGE QuasiQuotes               #-}
 {-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
-{-# LANGUAGE StandaloneDeriving        #-}
-{-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 {-# LANGUAGE UndecidableInstances      #-}
-{-# LANGUAGE RecordWildCards           #-}
 
 -- TODO:
 --
@@ -22,244 +16,52 @@
 -- Body Rotation Options?
 -- Filter Out Non-Moving People?
 -- Some Kind Of Person Identification?
+--
 -- TODO: Print time
 --
 -- TODO: It currently crashes when it ends. We should stop the animation (or
 -- loop it) when we run out of time.
+--
+--
+-- TOOD:
+--   - If we're going for POAM we need to have a bunch of configurations that
+--   let us design a particular item and then emit a file of the right type.
+--
+--   Basically, we need to cut off the thing. Then it works.
+--
+-- TODO: Calculate max number of cols we can have depending on the width we've
+-- asked for
+--
+-- TODO: Visible body-part count filter
+--
+-- TODO: Use Rasterific to generate some Gifs
 
 module Main where
 
-import           Data.Maybe
-import           Data.List.Split        (chunksOf
-                                        , divvy)
-import           GHC.Generics
+
+import           Data
+import           Montage
+import           Animation
 import           Options.Generic
+import           Data.Maybe
 import           Data.Aeson
 import           System.FilePath.Find
 import           Data.String.Conv       (toS)
-import           Graphics.Gloss
-import qualified Data.ByteString        as B
-import qualified Diagrams.Prelude       as D
-import qualified Diagrams.Backend.SVG   as D
-
-
--- | Non-type safe options. 
-data Options' w = 
-        Animation
-            { width           :: w ::: Int         <?> "Video width in pixels."
-            , height          :: w ::: Int         <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath    <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float <?> "Time (in minutes) at which we should end."
-            , fps             :: w ::: Float       <?> "Frames per second."
-            } 
-        | Montage
-            { width           :: w ::: Int         <?> "Video width in pixels."
-            , height          :: w ::: Int         <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath    <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float <?> "Time (in minutes) at which we should end."
-            , rows            :: w ::: Int         <?> "Number of rows in the resulting grid."
-            , columns         :: w ::: Int         <?> "Number of columns in the resulting grid."
-            , outFile         :: w ::: FilePath    <?> "Name of the file that we output: out.png"
-            }
-        deriving (Generic)
-
-
-type Options = Options' Unwrapped
-
-deriving instance Show Options
-
-instance ParseRecord (Options' Wrapped) where 
-    -- So we get "sourceDirectory" -> "source-directory"
-    parseRecord = parseRecordWithModifiers lispCaseModifiers
-
-data Person = Person 
-    { poseKeyPoints :: ![Float]
-    } deriving (Show)
-
-data Frame = Frame 
-    { people :: ![Person]
-    } deriving (Show)
-
-instance FromJSON Person where
-    parseJSON = withObject "person" $ \o ->
-        Person <$> o .: "pose_keypoints"
-
-instance FromJSON Frame where
-    parseJSON = withObject "frame" $ \o ->
-        Frame <$> o .: "people"
-
-data Skeleton = Skeleton
-    { nose          :: !KeyPoint
-    , neck          :: !KeyPoint
-    , rightShoulder :: !KeyPoint
-    , rightElbow    :: !KeyPoint
-    , rightWrist    :: !KeyPoint
-    , leftShoulder  :: !KeyPoint
-    , leftElbow     :: !KeyPoint
-    , leftWrist     :: !KeyPoint
-    , rightHip      :: !KeyPoint
-    , rightKnee     :: !KeyPoint
-    , rightAnkle    :: !KeyPoint
-    , leftHip       :: !KeyPoint
-    , leftKnee      :: !KeyPoint
-    , leftAnkle     :: !KeyPoint
-    , rightEye      :: !KeyPoint
-    , leftEye       :: !KeyPoint
-    , rightEar      :: !KeyPoint
-    , leftEar       :: !KeyPoint
-    } deriving (Show)
-
-data KeyPoint = KeyPoint 
-    { x     :: !Float
-    , y     :: !Float
-    , score :: !Float
-    } deriving (Show)
+import qualified Data.ByteString         as B
 
 
 main :: IO ()
 main = do
     opts :: Options <- unwrapRecord "DanceView - Watch the poses generated by OpenPose."
     jsonFiles <- find (depth ==? 0) (extension ==? ".json") (sourceDirectory opts)
-    frames    <- mapM readFrame jsonFiles
+    frames'    <- mapM readFrame jsonFiles
+
+    -- Ensure there are people.
+    let frames = filter (not . null . people) frames'
 
     case opts of
-      Animation {..} -> doAnimation frames opts
-      Montage   {..} -> doMontage   frames opts
-
-
-
--- TODO: Add an optional box that is the size of the frame (maybe?) so that
--- all the sub-boxes are the same size.
-asDiagrams :: Options -> [[KeyPoint]] -> D.Diagram D.B
-asDiagrams opts keyPoints = mconcat [ D.fromVertices [ D.p2 p, D.p2 q ] | (p,q) <- edges ]
-                    D.# D.pad 1.10
-                    D.# D.lwO 0.8
-    where
-        points = (map . map) (\(KeyPoint {..}) -> 
-                    (realToFrac x, realToFrac (fromIntegral (height opts) - y))) keyPoints
-
-        edges  = concat $ map (\xs -> zip xs (tail xs)) points
-
-
-doMontage :: [Frame] -> Options -> IO ()
-doMontage allFrames opts = do
-
-    -- First we need to pick out rows*columns frames. We should pick them so
-    -- that they are evenly spaced
-    
-    let frameCount  = (rows opts) * (columns opts)
-        totalFrames = length allFrames
-        stepSize    = totalFrames `div` frameCount
-        frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
-
-    
-    -- Now, having an even selection of frames, we need to render them
-    let diagrams    = map (asDiagrams opts . asKeyPoints) frames
-        gridded     = divvy (rows opts) (rows opts) diagrams
-        joined      = D.vcat (map D.hcat gridded)
-    
-
-    -- TODO: Make this a parameter. 
-    let w    = 1280
-        h    = 720
-        size = D.mkSizeSpec (D.V2 (Just w) (Just h))
-
-    let diagram = joined
-
-    D.renderPretty (outFile opts) size diagram
-
-
-doAnimation :: [Frame] -> Options -> IO ()
-doAnimation frames opts = do
-    animate (InWindow "DanceView" (width opts, height opts) (0,0))
-            white
-            (danceStep opts frames)
-
-
-danceStep :: Options -> [Frame] -> Float -> Picture
-danceStep opts frames elapsed = 
-    Pictures $ [background, danceFloor] ++ bodies
-    where
-        background = translate (w/2) (h/2) $ color (greyN 0.8) $ rectangleSolid w h
-        danceFloor = color azure $ polygon [ (w/9, h/2)
-                                           , (w - (w/9), h/2)
-                                           , (w,0)
-                                           , (0,0)
-                                           ]
-
-        -- TOOD: Make sure we don't go too far in frame steps.
-        frame = frames !! round (elapsed * (fps opts))
-
-        w = fromIntegral (width opts)
-        h = fromIntegral (height opts)
-
-        points :: [[Point]]
-        points     = (map . map) (\(KeyPoint {..}) -> (x, h - y)) (asKeyPoints frame)
-        
-        bodies :: [Picture]
-        bodies     = map line points
-
-
-toSkeleton :: Person -> Skeleton
-toSkeleton (Person {..}) = Skeleton {..}
-    where
-        (nose
-         : neck
-         : rightShoulder
-         : rightElbow
-         : rightWrist
-         : leftShoulder
-         : leftElbow
-         : leftWrist
-         : rightHip
-         : rightKnee
-         : rightAnkle
-         : leftHip
-         : leftKnee
-         : leftAnkle
-         : rightEye
-         : leftEye
-         : rightEar
-         : leftEar
-         : [])    = keyPoints
-        -- [KeyPoint 910 720 0.4, ...]
-        keyPoints = map (\(x:y:score:[]) -> KeyPoint x y score) 
-                        (chunksOf 3 poseKeyPoints)
-
-
-asKeyPoints :: Frame -> [[KeyPoint]]
-asKeyPoints frame = keyPoints
-    where
-        components :: [Skeleton]
-        components = map toSkeleton (people frame)
-        keyPoints :: [[KeyPoint]]
-        keyPoints  = concat $ map keyPointPaths components
-
-
-keyPointPaths ::  Skeleton -> [[KeyPoint]]
-keyPointPaths (Skeleton {..}) =
-    map dropEmpty
-        [ rightFace
-        , leftFace
-        , spine
-        , rightArm
-        , leftArm
-        , rightLeg
-        , leftLeg
-        ]
-    where
-        rightFace = [nose, rightEye, rightEar]
-        leftFace  = [nose, leftEye, leftEar]
-        spine     = [nose, neck]
-        rightArm  = [neck, rightShoulder, rightElbow, rightWrist]
-        leftArm   = [neck, leftShoulder, leftElbow, leftWrist]
-        rightLeg  = [neck, rightHip, rightKnee, rightAnkle]
-        leftLeg   = [neck, leftHip, leftKnee, leftAnkle]
-
-        -- Drop any zero-score elements
-        dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))
+      DoAnimation {..} -> doAnimation frames opts
+      DoMontage   {..} -> doMontage   frames opts
 
 
 readFrame :: FilePath -> IO Frame
@@ -268,6 +70,6 @@ readFrame f = do
     -- files. There's probably a nicer way to do this, but hey.
     file <- B.readFile f
 
-    return $ fromMaybe (error $ "Couldn't load Frame from file: " ++ (show file))
+    return $ fromMaybe (error $ "Couldn't load Frame from file: " ++ show file)
                        (decode' (toS file)) 
 
