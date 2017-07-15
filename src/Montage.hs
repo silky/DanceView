@@ -70,14 +70,14 @@ asDiagrams opts colour keyPoints = mconcat [bones, r]
                             # alignY 0
                             # lineCap LineCapRound
 
-        -- The envelope.
+        -- Encase the thing in a region as large as the
+        -- original video.
+        
         w = fromIntegral $ videoWidth  opts
         h = fromIntegral $ videoHeight opts
+        r = phantom (rect w h :: D V2 Double)
 
-        r = rect w h # lc white
-
-        points = (map . map) (\KeyPoint {..} -> (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))) keyPoints
+        points = (map . map) (\KeyPoint {..} -> 
+                    (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))) keyPoints
         edges  = concatMap (\xs -> zip xs (tail xs)) points
-
-
 

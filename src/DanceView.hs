@@ -47,6 +47,7 @@ keyPointPaths Skeleton {..} =
         [ rightFace
         , leftFace
         , spine
+        , body
         , rightArm
         , leftArm
         , rightLeg
@@ -56,10 +57,19 @@ keyPointPaths Skeleton {..} =
         rightFace = [nose, rightEye, rightEar]
         leftFace  = [nose, leftEye, leftEar]
         spine     = [nose, neck]
+        body      = [neck, pelvis]
+        
+        -- Let's construct a pelvis
+        (KeyPoint x1 y1 s1) = leftHip
+        (KeyPoint x2 y2 s2) = rightHip
+        px = (x1 + x2) / 2
+        py = (y1 + y2) / 2
+        pelvis = KeyPoint px py (min s1 s2)
+
         rightArm  = [neck, rightShoulder, rightElbow, rightWrist]
         leftArm   = [neck, leftShoulder, leftElbow, leftWrist]
-        rightLeg  = [neck, rightHip, rightKnee, rightAnkle]
-        leftLeg   = [neck, leftHip, leftKnee, leftAnkle]
+        rightLeg  = [pelvis, rightHip, rightKnee, rightAnkle]
+        leftLeg   = [pelvis, leftHip, leftKnee, leftAnkle]
 
         -- Drop any zero-score elements
         dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))
