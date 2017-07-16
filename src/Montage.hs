@@ -17,6 +17,7 @@ import           System.Random
 import           Data.List.Split        (divvy)
 import           Diagrams.Prelude       hiding (Options)
 import           Diagrams.Backend.Cairo
+-- import           Diagrams.Backend.SVG   hiding (Options)
 
 
 doMontage :: [Frame] -> Options -> IO ()
@@ -35,10 +36,11 @@ doMontage allFrames opts = do
         joined   = vcat (map hcat gridded)
     
 
-    let outSize = mkWidth (outWidth opts)
+    -- let outSize = mkWidth (outWidth opts)
+    let outSize = mkSizeSpec $ V2 (Just $ outWidth opts) (Just $ outHeight opts)
         diagram = joined # bg white
 
-    -- renderPretty (outFile opts) size diagram
+    -- renderPretty (outFile opts) outSize diagram
     renderCairo  (outFile opts) outSize diagram
 
 
@@ -56,20 +58,23 @@ randColours seed = map (colours !!) $ randomRs (0, len) (mkStdGen seed)
         len = length colours - 1
 
 
--- TODO: Add an optional box that is the size of the frame (maybe?) so that
--- all the sub-boxes are the same size.
+
+
+
 asDiagrams :: Options -> Colour Double -> [[KeyPoint]] -> Diagram B
 asDiagrams opts colour keyPoints = mconcat [bones, r]
                             # pad 1.0
-                            # lwG 8
+                            # lwG 5
 
     where
         bones = mconcat [ fromVertices [ p2 p, p2 q ] | (p,q) <- edges ]
                             # lc colour
-                            # alignX 0
-                            # alignY 0
-                            # lineCap LineCapRound
-
+                            # centerXY
+                            # lineCap  LineCapRound
+                            # lineJoin LineJoinRound
+        -- 35 inches = 3360 px
+        -- 20 inches = 1920 px
+        
         -- Encase the thing in a region as large as the
         -- original video.
         

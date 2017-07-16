@@ -38,11 +38,11 @@ asKeyPoints frame = keyPoints
         components :: [Skeleton]
         components = map toSkeleton (people frame)
         keyPoints :: [[KeyPoint]]
-        keyPoints  = concatMap keyPointPaths components
+        keyPoints  = concatMap (keyPointPaths False) components
 
 
-keyPointPaths ::  Skeleton -> [[KeyPoint]]
-keyPointPaths Skeleton {..} =
+keyPointPaths :: Bool -> Skeleton -> [[KeyPoint]]
+keyPointPaths includePelvis Skeleton {..} =
     map dropEmpty
         [ rightFace
         , leftFace
@@ -57,7 +57,9 @@ keyPointPaths Skeleton {..} =
         rightFace = [nose, rightEye, rightEar]
         leftFace  = [nose, leftEye, leftEar]
         spine     = [nose, neck]
-        body      = [neck, pelvis]
+
+        (hipJointPoint, body) = if includePelvis then (pelvis, [neck, pelvis])
+                                     else (neck, [])
         
         -- Let's construct a pelvis
         (KeyPoint x1 y1 s1) = leftHip
@@ -68,8 +70,8 @@ keyPointPaths Skeleton {..} =
 
         rightArm  = [neck, rightShoulder, rightElbow, rightWrist]
         leftArm   = [neck, leftShoulder, leftElbow, leftWrist]
-        rightLeg  = [pelvis, rightHip, rightKnee, rightAnkle]
-        leftLeg   = [pelvis, leftHip, leftKnee, leftAnkle]
+        rightLeg  = [hipJointPoint, rightHip, rightKnee, rightAnkle]
+        leftLeg   = [hipJointPoint, leftHip, leftKnee, leftAnkle]
 
         -- Drop any zero-score elements
         dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))

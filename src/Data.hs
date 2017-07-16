@@ -37,7 +37,8 @@ data Options' w =
             , rows            :: w ::: Int         <?> "Number of rows in the resulting grid."
             , columns         :: w ::: Int         <?> "Number of columns in the resulting grid."
             , outFile         :: w ::: FilePath    <?> "Name of the file that we output: out.png"
-            , outWidth        :: w ::: Double      <?> "Width out the resulting image."
+            , outWidth        :: w ::: Double      <?> "Width of the resulting image."
+            , outHeight       :: w ::: Double      <?> "Height of the resulting image."
             }
         deriving (Generic)
 
