@@ -21,24 +21,24 @@ import           Data.Aeson
 -- | Non-type safe options. Sad days.
 data Options' w = 
         DoAnimation
-            { videoWidth           :: w ::: Int         <?> "Video width in pixels."
-            , videoHeight          :: w ::: Int         <?> "Video height in pixels."
+            { videoWidth      :: w ::: Int         <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int         <?> "Video height in pixels."
             , sourceDirectory :: w ::: FilePath    <?> "Directory in which to find the pose annotation json files."
             , start           :: w ::: Maybe Float <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float <?> "Time (in minutes) at which we should end."
             , fps             :: w ::: Float       <?> "Frames per second."
             } 
         | DoMontage
-            { videoWidth           :: w ::: Int         <?> "Video width in pixels."
-            , videoHeight          :: w ::: Int         <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath    <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float <?> "Time (in minutes) at which we should end."
-            , rows            :: w ::: Int         <?> "Number of rows in the resulting grid."
-            , columns         :: w ::: Int         <?> "Number of columns in the resulting grid."
-            , outFile         :: w ::: FilePath    <?> "Name of the file that we output: out.png"
-            , outWidth        :: w ::: Double      <?> "Width of the resulting image."
-            , outHeight       :: w ::: Double      <?> "Height of the resulting image."
+            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
+            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
+            , rows            :: w ::: Int          <?> "Number of rows in the resulting grid."
+            , columns         :: w ::: Int          <?> "Number of columns in the resulting grid."
+            , outFile         :: w ::: FilePath     <?> "Name of the file that we output: out.png"
+            , outWidth        :: w ::: Maybe Double <?> "Width of the resulting image."
+            , outHeight       :: w ::: Maybe Double <?> "Height of the resulting image."
             }
         deriving (Generic)
 

@@ -17,8 +17,9 @@ import           System.Random
 import           Data.List.Split        (divvy)
 import           Diagrams.Prelude       hiding (Options)
 import           Diagrams.Backend.Cairo
--- import           Diagrams.Backend.SVG   hiding (Options)
-
+        
+-- 35 inches = 3360 px
+-- 20 inches = 1920 px
 
 doMontage :: [Frame] -> Options -> IO ()
 doMontage allFrames opts = do
@@ -36,15 +37,18 @@ doMontage allFrames opts = do
         joined   = vcat (map hcat gridded)
     
 
-    -- let outSize = mkWidth (outWidth opts)
-    let outSize = mkSizeSpec $ V2 (Just $ outWidth opts) (Just $ outHeight opts)
+    let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
         diagram = joined # bg white
 
-    -- renderPretty (outFile opts) outSize diagram
     renderCairo  (outFile opts) outSize diagram
 
 
 colours :: [Colour Double]
+-- colours = replicate 10 white ++ 
+--           [ sRGB24 255 18 135 -- Fuschia
+--           , sRGB24 16 180 232 -- Blue
+--           ]
+-- -- Colourful
 colours = [ sRGB24 255 18 135 -- Fuschia
           , sRGB24 255 186 0  -- Orange
           , sRGB24 16 180 232 -- Blue
@@ -58,9 +62,6 @@ randColours seed = map (colours !!) $ randomRs (0, len) (mkStdGen seed)
         len = length colours - 1
 
 
-
-
-
 asDiagrams :: Options -> Colour Double -> [[KeyPoint]] -> Diagram B
 asDiagrams opts colour keyPoints = mconcat [bones, r]
                             # pad 1.0
@@ -72,14 +73,12 @@ asDiagrams opts colour keyPoints = mconcat [bones, r]
                             # centerXY
                             # lineCap  LineCapRound
                             # lineJoin LineJoinRound
-        -- 35 inches = 3360 px
-        -- 20 inches = 1920 px
-        
+
         -- Encase the thing in a region as large as the
         -- original video.
         
-        w = fromIntegral $ videoWidth  opts
-        h = fromIntegral $ videoHeight opts
+        w = fromIntegral (videoWidth  opts `div` 2)
+        h = fromIntegral (videoHeight opts)
         r = phantom (rect w h :: D V2 Double)
 
         points = (map . map) (\KeyPoint {..} -> 
