@@ -9,38 +9,29 @@
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 
-module Montage where
+module Gif where
 
 import           Data
 import           DanceView
 import           DiagramsStuff
-import           Data.List.Split        (divvy)
-import           Diagrams.Prelude       hiding (Options)
-import           Diagrams.Backend.Cairo
-        
--- 35 inches = 3360 px
--- 20 inches = 1920 px
+import           Diagrams.Prelude             hiding (Options)
+import           Diagrams.Backend.Rasterific  hiding (Options)
 
-doMontage :: [Frame] -> Options -> IO ()
-doMontage allFrames opts = do
-    -- First we need to pick out rows*columns frames. We should pick them so
-    -- that they are evenly spaced
-    let frameCount  = rows opts * columns opts
-        totalFrames = length allFrames
-        stepSize    = totalFrames `div` frameCount
+
+doGif :: [Frame] -> Options -> IO ()
+doGif allFrames opts = do
+    let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
+        delay   = 15 -- round (fps opts)
+
+    let totalFrames = length allFrames
+        stepSize    = 5
+        frameCount  = totalFrames `div` stepSize
         frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
 
-    -- Now, having an even selection of frames, we need to render them
     let cs       = randColours 3
         diagrams = zipWith (\f c -> asDiagrams opts c (asKeyPoints f)) frames cs
-        gridded  = divvy (columns opts) (columns opts) diagrams
-        joined   = vcat (map hcat gridded)
-    
 
-    let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
-        diagram = joined # bg white
-
-    renderCairo (outFile opts) outSize diagram
+    animatedGif (outFile opts) outSize LoopingForever delay diagrams
 
 
 asDiagrams :: Options -> Colour Double -> [[KeyPoint]] -> Diagram B

@@ -1,5 +1,5 @@
 name:                dance-view
-version:             0.1.0.1
+version:             0.1.1.0
 description:         Uses gloss to view the OpenPose pose annotations.
 homepage:            https://github.com/silky/dance-view#readme
 license:             BSD3
@@ -14,11 +14,14 @@ dependencies:
   - base >= 4.7 && < 5
   - aeson
   - bytestring
+  - containers
   - diagrams
   - diagrams-lib
   - diagrams-svg
   - diagrams-cairo
   - diagrams-contrib
+  - diagrams-rasterific
+  - filepath
   - filemanip
   - generic-lens
   - gloss
@@ -26,6 +29,7 @@ dependencies:
   - random
   - split
   - string-conv
+  - text
 
 executables:
   dance-view:
@@ -36,4 +40,6 @@ executables:
         - Animation
         - DanceView
         - Data
+        - Gif
         - Montage
+        - DiagramsStuff

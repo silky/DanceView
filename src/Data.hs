@@ -20,13 +20,30 @@ import           Data.Aeson
 --
 -- | Non-type safe options. Sad days.
 data Options' w = 
-        DoAnimation
-            { videoWidth      :: w ::: Int         <?> "Video width in pixels."
-            , videoHeight     :: w ::: Int         <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath    <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float <?> "Time (in minutes) at which we should end."
-            , fps             :: w ::: Float       <?> "Frames per second."
+        JsonExport
+            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
+            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
+            }
+        | DoGif
+            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
+            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
+            , fps             :: w ::: Float        <?> "Frames per second."
+            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
+            , outWidth        :: w ::: Maybe Double <?> "Width of the resulting image."
+            , outHeight       :: w ::: Maybe Double <?> "Height of the resulting image."
+            } 
+        | DoAnimation
+            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
+            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
+            , fps             :: w ::: Float        <?> "Frames per second."
             } 
         | DoMontage
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
@@ -34,9 +51,9 @@ data Options' w =
             , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
             , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
+            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
             , rows            :: w ::: Int          <?> "Number of rows in the resulting grid."
             , columns         :: w ::: Int          <?> "Number of columns in the resulting grid."
-            , outFile         :: w ::: FilePath     <?> "Name of the file that we output: out.png"
             , outWidth        :: w ::: Maybe Double <?> "Width of the resulting image."
             , outHeight       :: w ::: Maybe Double <?> "Height of the resulting image."
             }
@@ -52,11 +69,21 @@ instance ParseRecord (Options' Wrapped) where
 
 newtype Person = Person 
     { poseKeyPoints :: [Float]
-    } deriving (Show)
+    } deriving (Show, Generic)
+
+-- | A frame that contains only one person. Useful once we've done some sort of
+--   person extraction.
+newtype SoloFrame = SoloFrame
+    { person :: Person
+    } deriving (Show, Generic)
 
 newtype Frame = Frame 
     { people :: [Person]
-    } deriving (Show)
+    } deriving (Show, Generic)
+
+instance ToJSON Person
+instance ToJSON Frame
+instance ToJSON SoloFrame
 
 instance FromJSON Person where
     parseJSON = withObject "person" $ \o ->
@@ -91,5 +118,15 @@ data KeyPoint = KeyPoint
     { x     :: !Float
     , y     :: !Float
     , score :: !Float
-    } deriving (Show)
+    } deriving (Show, Generic)
 
+-- 
+data ThreePoint = ThreePoint 
+    { x     :: !Float
+    , y     :: !Float
+    , z     :: !Float
+    , score :: !Float
+    } deriving (Show, Generic)
+
+instance ToJSON KeyPoint
+instance ToJSON ThreePoint

@@ -1,9 +1,9 @@
--- This file has been generated from package.yaml by hpack version 0.17.0.
+-- This file has been generated from package.yaml by hpack version 0.17.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           dance-view
-version:        0.1.0.1
+version:        0.1.1.0
 description:    Uses gloss to view the OpenPose pose annotations.
 category:       Web
 homepage:       https://github.com/silky/dance-view#readme
@@ -27,11 +27,14 @@ executable dance-view
       base >= 4.7 && < 5
     , aeson
     , bytestring
+    , containers
     , diagrams
     , diagrams-lib
     , diagrams-svg
     , diagrams-cairo
     , diagrams-contrib
+    , diagrams-rasterific
+    , filepath
     , filemanip
     , generic-lens
     , gloss
@@ -39,9 +42,12 @@ executable dance-view
     , random
     , split
     , string-conv
+    , text
   other-modules:
       Animation
       DanceView
       Data
+      Gif
       Montage
+      DiagramsStuff
   default-language: Haskell2010

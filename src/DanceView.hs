@@ -32,13 +32,41 @@ toSkeleton Person {..} = Skeleton {..}
                         (chunksOf 3 poseKeyPoints)
 
 
+toThreePoint :: Options -> [[Float]] -> KeyPoint -> ThreePoint
+toThreePoint opts depthMap KeyPoint {..} = ThreePoint 
+    { x     = x
+    , y     = y
+    , z     = z
+    , score = score
+    }
+        where
+            ly = length depthMap
+            lx = length $ head depthMap
+
+            -- depthMap = 160 x 128
+            x' = round $ x * fromIntegral (lx `div` videoWidth  opts)
+            y' = round $ y * fromIntegral (ly `div` videoHeight opts)
+
+            x'' = min (lx - 1) x'
+            y'' = min (ly - 1) y'
+
+            z = (depthMap !! y'') !! x''
+
+
+asThreePoints :: Options -> Frame -> [[Float]] -> [[ThreePoint]]
+asThreePoints opts frame depthMap = threePoints
+    where
+        keyPoints   = asKeyPoints frame
+        threePoints = (map . map) (toThreePoint opts depthMap) keyPoints
+
+
 asKeyPoints :: Frame -> [[KeyPoint]]
 asKeyPoints frame = keyPoints
     where
         components :: [Skeleton]
         components = map toSkeleton (people frame)
         keyPoints :: [[KeyPoint]]
-        keyPoints  = concatMap (keyPointPaths False) components
+        keyPoints  = concatMap (keyPointPaths True) components
 
 
 keyPointPaths :: Bool -> Skeleton -> [[KeyPoint]]
@@ -75,5 +103,11 @@ keyPointPaths includePelvis Skeleton {..} =
 
         -- Drop any zero-score elements
         dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))
+
+
+round2 :: (Fractional a, RealFrac a) => a -> a
+round2 f = fromInteger (round $ f * (10^n)) / (10.0^^n)
+    where
+        n = 2 :: Int
 
 
