@@ -9,10 +9,8 @@ From: [Evolution Of Dance](https://www.youtube.com/watch?v=dMH0bHeiRNg).
 ### Usage
 
 ```
-stack run -- -- --width 384 --height 288 --fps 14.99 --source-directory ../data/evolution_output
+stack run -- -- --help
 ```
-
-Supposing you've run OpenPose and have such an output directory.
 
 
 ### Misc
