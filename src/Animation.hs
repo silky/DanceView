@@ -42,7 +42,7 @@ danceStep opts frames elapsed =
         h = fromIntegral $ videoHeight opts
 
         points :: [[Point]]
-        points     = (map . map) (\KeyPoint {..} -> (x, h - y)) (asKeyPoints frame)
+        points     = (map . map) (\KeyPoint {..} -> (x, h - y)) (asKeyPoints True frame)
         
         bodies :: [Picture]
         bodies     = map line points

@@ -3,7 +3,7 @@
 -- see: https://github.com/sol/hpack
 
 name:           dance-view
-version:        0.1.1.0
+version:        0.1.1.1
 description:    Various ways of viewing pose network data
 category:       Web
 homepage:       https://github.com/silky/dance-view#readme

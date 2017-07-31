@@ -56,22 +56,22 @@ toThreePoint opts depthMap KeyPoint {..} = ThreePoint
 asThreePoints :: Options -> Frame -> [[Float]] -> [[ThreePoint]]
 asThreePoints opts frame depthMap = threePoints
     where
-        keyPoints   = asKeyPoints frame
+        keyPoints   = asKeyPoints False frame
         threePoints = (map . map) (toThreePoint opts depthMap) keyPoints
 
 
-asKeyPoints :: Frame -> [[KeyPoint]]
-asKeyPoints frame = keyPoints
+asKeyPoints :: Bool -> Frame -> [[KeyPoint]]
+asKeyPoints cleanup frame = keyPoints
     where
         components :: [Skeleton]
         components = map toSkeleton (people frame)
         keyPoints :: [[KeyPoint]]
-        keyPoints  = concatMap (keyPointPaths True) components
+        keyPoints  = concatMap (keyPointPaths cleanup True) components
 
 
-keyPointPaths :: Bool -> Skeleton -> [[KeyPoint]]
-keyPointPaths includePelvis Skeleton {..} =
-    map dropEmpty
+keyPointPaths :: Bool -> Bool -> Skeleton -> [[KeyPoint]]
+keyPointPaths cleanup includePelvis Skeleton {..} =
+    map op
         [ rightFace
         , leftFace
         , spine
@@ -102,6 +102,7 @@ keyPointPaths includePelvis Skeleton {..} =
         leftLeg   = [hipJointPoint, leftHip, leftKnee, leftAnkle]
 
         -- Drop any zero-score elements
+        op        = if cleanup then dropEmpty else id
         dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))
 
 

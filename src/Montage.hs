@@ -32,7 +32,7 @@ doMontage allFrames opts = do
 
     -- Now, having an even selection of frames, we need to render them
     let cs       = randColours 3
-        diagrams = zipWith (\f c -> asDiagrams opts c (asKeyPoints f)) frames cs
+        diagrams = zipWith (\f c -> asDiagrams opts c (asKeyPoints True f)) frames cs
         gridded  = divvy (columns opts) (columns opts) diagrams
         joined   = vcat (map hcat gridded)
     
