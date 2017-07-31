@@ -4,7 +4,7 @@
 
 name:           dance-view
 version:        0.1.1.0
-description:    Uses gloss to view the OpenPose pose annotations.
+description:    Various ways of viewing pose network data
 category:       Web
 homepage:       https://github.com/silky/dance-view#readme
 author:         Noon van der Silk
