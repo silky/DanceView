@@ -25,6 +25,8 @@ data Options' w =
             , videoHeight     :: w ::: Int          <?> "Video height in pixels."
             , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
             , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
+            , onlySolo        :: w ::: Bool         <?> "Only emit one person per frame."
+            , withDepth       :: w ::: Bool         <?> "Also emit the z-coordinate by looking for corresponding Depth data."
             }
         | DoGif
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
@@ -71,19 +73,12 @@ newtype Person = Person
     { poseKeyPoints :: [Float]
     } deriving (Show, Generic)
 
--- | A frame that contains only one person. Useful once we've done some sort of
---   person extraction.
-newtype SoloFrame = SoloFrame
-    { person :: Person
-    } deriving (Show, Generic)
-
 newtype Frame = Frame 
     { people :: [Person]
     } deriving (Show, Generic)
 
 instance ToJSON Person
 instance ToJSON Frame
-instance ToJSON SoloFrame
 
 instance FromJSON Person where
     parseJSON = withObject "person" $ \o ->

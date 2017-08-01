@@ -83,10 +83,21 @@ readThing f = do
 
 jsonExport :: [Frame] -> Options -> IO ()
 jsonExport allFrames opts = do
-    let directory = sourceDirectory opts </> "depth"
+    let directory  = sourceDirectory opts </> "depth"
+
+    let frames = case onlySolo opts of
+                        True  -> map (\f -> Frame (headOrEmpty (people f))) allFrames
+                            where headOrEmpty []    = []
+                                  headOrEmpty (x:_) = [x]
+                        False -> allFrames
 
     threePoints <- zipWithM (\k f -> do dm <- readThing (directory </> show k <.> "json")
                                         return $ asThreePoints opts f dm
-                            ) [( 0 :: Integer) ..] allFrames
+                            ) [( 0 :: Integer) ..] frames
 
-    LB.writeFile (outFile opts) (encode threePoints)
+    let keyPoints  = map (asKeyPoints False) frames
+        jsonOutput = if withDepth opts then encode threePoints
+                                       else encode keyPoints
+
+    LB.writeFile (outFile opts) jsonOutput
+

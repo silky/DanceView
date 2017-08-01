@@ -87,7 +87,7 @@ keyPointPaths cleanup includePelvis Skeleton {..} =
         spine     = [nose, neck]
 
         (hipJointPoint, body) = if includePelvis then (pelvis, [neck, pelvis])
-                                     else (neck, [])
+                                                 else (neck, [])
         
         -- Let's construct a pelvis
         (KeyPoint x1 y1 s1) = leftHip
