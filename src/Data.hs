@@ -17,7 +17,8 @@ module Data where
 import           GHC.Generics
 import           Options.Generic
 import           Data.Aeson
---
+
+
 -- | Non-type safe options. Sad days.
 data Options' w = 
         JsonExport
@@ -69,53 +70,91 @@ instance ParseRecord (Options' Wrapped) where
     -- So we get "sourceDirectory" -> "source-directory"
     parseRecord = parseRecordWithModifiers lispCaseModifiers
 
+
+-- | A person, as found in the pose output JSON.
 newtype Person = Person 
     { poseKeyPoints :: [Float]
     } deriving (Show, Generic)
 
-newtype Frame = Frame 
-    { people :: [Person]
-    } deriving (Show, Generic)
-
 instance ToJSON Person
-instance ToJSON Frame
 
 instance FromJSON Person where
     parseJSON = withObject "person" $ \o ->
         Person <$> o .: "pose_keypoints"
 
-instance FromJSON Frame where
-    parseJSON = withObject "frame" $ \o ->
-        Frame <$> o .: "people"
 
-data Skeleton = Skeleton
-    { nose          :: !KeyPoint
-    , neck          :: !KeyPoint
-    , rightShoulder :: !KeyPoint
-    , rightElbow    :: !KeyPoint
-    , rightWrist    :: !KeyPoint
-    , leftShoulder  :: !KeyPoint
-    , leftElbow     :: !KeyPoint
-    , leftWrist     :: !KeyPoint
-    , rightHip      :: !KeyPoint
-    , rightKnee     :: !KeyPoint
-    , rightAnkle    :: !KeyPoint
-    , leftHip       :: !KeyPoint
-    , leftKnee      :: !KeyPoint
-    , leftAnkle     :: !KeyPoint
-    , rightEye      :: !KeyPoint
-    , leftEye       :: !KeyPoint
-    , rightEar      :: !KeyPoint
-    , leftEar       :: !KeyPoint
-    } deriving (Show)
-
+-- | A keypoint is the position of a joint; if they score is 
+--   low then there is less confidence about the position.
 data KeyPoint = KeyPoint 
     { x     :: !Float
     , y     :: !Float
     , score :: !Float
     } deriving (Show, Generic)
 
--- 
+instance ToJSON KeyPoint
+
+
+-- | A collection of keypoints that define a person. We allow
+--   a parameter that should either by a KeyPoint or a ThreePoint.
+data Skeleton a = Skeleton
+    { nose          :: !a
+    , neck          :: !a
+    , rightShoulder :: !a
+    , rightElbow    :: !a
+    , rightWrist    :: !a
+    , leftShoulder  :: !a
+    , leftElbow     :: !a
+    , leftWrist     :: !a
+    , rightHip      :: !a
+    , rightKnee     :: !a
+    , rightAnkle    :: !a
+    , leftHip       :: !a
+    , leftKnee      :: !a
+    , leftAnkle     :: !a
+    , rightEye      :: !a
+    , leftEye       :: !a
+    , rightEar      :: !a
+    , leftEar       :: !a
+
+    -- | The name of this skeleton. Used for identification
+    --   purposes.
+    , name          :: !Text
+    } deriving (Show, Generic)
+
+instance ToJSON (Skeleton KeyPoint)
+instance ToJSON (Skeleton ThreePoint)
+
+type Skeleton2D = Skeleton KeyPoint
+type Skeleton3D = Skeleton ThreePoint
+
+
+-- | A frame has people, and also a frame number. We let this
+--   be parametrized because sometimes we'll want a frame to
+--   have a list of "Person"'s, and at other times we'll like
+--   to have a list of "Skeleton"s.
+data Frame a = Frame
+    { people      :: [a]
+    , frameNumber :: !Integer
+    } deriving (Show, Generic)
+
+instance ToJSON (Frame Person)
+instance ToJSON (Frame Skeleton2D)
+instance ToJSON (Frame Skeleton3D)
+
+
+-- | Frame data coming out of a pose network.
+newtype FrameData = FrameData
+    { people :: [Person]
+    } deriving (Show, Generic)
+
+instance ToJSON FrameData
+
+instance FromJSON FrameData where
+    parseJSON = withObject "frame" $ \o ->
+        FrameData <$> o .: "people"
+
+
+-- | A keypoint with depth information.
 data ThreePoint = ThreePoint 
     { x     :: !Float
     , y     :: !Float
@@ -123,5 +162,4 @@ data ThreePoint = ThreePoint
     , score :: !Float
     } deriving (Show, Generic)
 
-instance ToJSON KeyPoint
 instance ToJSON ThreePoint

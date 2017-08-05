@@ -1,11 +1,24 @@
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE DuplicateRecordFields     #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TypeApplications          #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 module DanceView where
 
 import           Data
+import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
 
-toSkeleton :: Person -> Skeleton
+toSkeleton :: Person -> Skeleton2D
 toSkeleton Person {..} = Skeleton {..}
     where
         (nose
@@ -27,6 +40,11 @@ toSkeleton Person {..} = Skeleton {..}
          : rightEar
          : leftEar
          : [])    = keyPoints
+
+        -- TODO: Work out a name. This should come from some sort
+        --       of person identification scheme.
+        name      = "n/a"
+
         -- [KeyPoint 910 720 0.4, ...]
         keyPoints = map (\[x, y, score] -> KeyPoint x y score) 
                         (chunksOf 3 poseKeyPoints)
@@ -43,7 +61,6 @@ toThreePoint opts depthMap KeyPoint {..} = ThreePoint
             ly = length depthMap
             lx = length $ head depthMap
 
-            -- depthMap = 160 x 128
             x' = round $ x * fromIntegral (lx `div` videoWidth  opts)
             y' = round $ y * fromIntegral (ly `div` videoHeight opts)
 
@@ -53,23 +70,22 @@ toThreePoint opts depthMap KeyPoint {..} = ThreePoint
             z = (depthMap !! y'') !! x''
 
 
-asThreePoints :: Options -> Frame -> [[Float]] -> [[ThreePoint]]
+asThreePoints :: Options -> Frame Person -> [[Float]] -> [[[ThreePoint]]]
 asThreePoints opts frame depthMap = threePoints
     where
         keyPoints   = asKeyPoints False frame
-        threePoints = (map . map) (toThreePoint opts depthMap) keyPoints
+        threePoints = (map . map . map) (toThreePoint opts depthMap) keyPoints
 
 
-asKeyPoints :: Bool -> Frame -> [[KeyPoint]]
+asKeyPoints :: Bool -> Frame Person -> [[[KeyPoint]]]
 asKeyPoints cleanup frame = keyPoints
     where
-        components :: [Skeleton]
-        components = map toSkeleton (people frame)
-        keyPoints :: [[KeyPoint]]
-        keyPoints  = concatMap (keyPointPaths cleanup True) components
+        components :: [Skeleton2D]
+        components = map toSkeleton (getField @"people" frame)
+        keyPoints  = map (keyPointPaths cleanup True) components
 
 
-keyPointPaths :: Bool -> Bool -> Skeleton -> [[KeyPoint]]
+keyPointPaths :: Bool -> Bool -> Skeleton2D -> [[KeyPoint]]
 keyPointPaths cleanup includePelvis Skeleton {..} =
     map op
         [ rightFace
@@ -110,5 +126,3 @@ round2 :: (Fractional a, RealFrac a) => a -> a
 round2 f = fromInteger (round $ f * (10^n)) / (10.0^^n)
     where
         n = 2 :: Int
-
-

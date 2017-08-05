@@ -18,10 +18,12 @@ import           Diagrams.Prelude             hiding (Options)
 import           Diagrams.Backend.Rasterific  hiding (Options)
 
 
-doGif :: [Frame] -> Options -> IO ()
+doGif :: [Frame Person] -> Options -> IO ()
 doGif allFrames opts = do
     let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
-        delay   = 15 -- round (fps opts)
+
+        -- TODO: This probably shouldn't be hard-coded.
+        delay   = 15
 
     let totalFrames = length allFrames
         stepSize    = 5
@@ -29,7 +31,7 @@ doGif allFrames opts = do
         frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
 
     let cs       = randColours 3
-        diagrams = zipWith (\f c -> asDiagrams opts c (asKeyPoints True f)) frames cs
+        diagrams = zipWith (\f c -> asDiagrams opts c (concat (asKeyPoints True f))) frames cs
 
     animatedGif (outFile opts) outSize LoopingForever delay diagrams
 

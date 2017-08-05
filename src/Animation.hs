@@ -17,14 +17,14 @@ import           DanceView
 import           Graphics.Gloss
 
 
-doAnimation :: [Frame] -> Options -> IO ()
+doAnimation :: [Frame Person] -> Options -> IO ()
 doAnimation frames opts = 
     animate (InWindow "DanceView" (videoWidth opts, videoHeight opts) (0,0))
             white
             (danceStep opts frames)
 
 
-danceStep :: Options -> [Frame] -> Float -> Picture
+danceStep :: Options -> [Frame Person] -> Float -> Picture
 danceStep opts frames elapsed = 
     Pictures $ [background, danceFloor] ++ bodies
     where
@@ -42,7 +42,7 @@ danceStep opts frames elapsed =
         h = fromIntegral $ videoHeight opts
 
         points :: [[Point]]
-        points     = (map . map) (\KeyPoint {..} -> (x, h - y)) (asKeyPoints True frame)
+        points     = (map . map) (\KeyPoint {..} -> (x, h - y)) (concat (asKeyPoints True frame))
         
         bodies :: [Picture]
         bodies     = map line points
