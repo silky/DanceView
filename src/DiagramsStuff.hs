@@ -1,7 +1,18 @@
+{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE TypeApplications          #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE PartialTypeSignatures     #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+
+
 module DiagramsStuff where
 
+import           Data
+import           DanceView
+import           Data.Generics.Record
 import           System.Random
-import           Diagrams.Prelude             hiding (Options)
+import           Diagrams.Prelude             hiding (Options, frame, names)
 
 
 colours :: [Colour Double]
@@ -21,4 +32,50 @@ randColours :: Int -> [Colour Double]
 randColours seed = map (colours !!) $ randomRs (0, len) (mkStdGen seed)
     where
         len = length colours - 1
+
+
+-- INSANITY! We use partial type signatures so that we don't need to require
+-- anything of 'b' until "just in time".
+asDiagrams :: _ => Options 
+                -> Colour Double 
+                -> Frame Person 
+                -> QDiagram b V2 Double Any
+asDiagrams opts colour frame = mconcat [names, bones, r]
+                                # pad 1.0
+                                # lwG 5
+                                # bg white
+
+    where
+        peeps     = getField @"people" frame
+        names     = mconcat (map namedXy peeps)
+
+        namedXy p@Person {..} = text (show name) 
+                                    # fc black 
+                                    # fontSizeL 60
+                                    # translate (r2 (xy (neck (toSkeleton p))))
+                                    # translate reasonableOrigin
+
+        xy KeyPoint {..} = (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))
+
+        keyPoints        = concat (asKeyPoints True frame)
+        points           = (map . map) xy keyPoints
+        edges            = concatMap (\xs -> zip xs (tail xs)) points
+
+        fw = fromIntegral $ videoWidth opts
+        fh = fromIntegral $ videoHeight opts
+
+        reasonableOrigin = r2 (- (fw / 2), - (fh / 2))
+
+        bones =  mconcat [ fromVertices [ p2 p, p2 q ] | (p,q) <- edges ]
+                         # lc colour
+                         # lineCap  LineCapRound
+                         # lineJoin LineJoinRound
+                         # translate reasonableOrigin
+
+        -- Encase the thing in a region as large as the
+        -- original video.
+        
+        w = fromIntegral (videoWidth  opts)
+        h = fromIntegral (videoHeight opts)
+        r = phantom (rect w h :: D V2 Double)
 

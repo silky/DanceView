@@ -15,6 +15,8 @@
 module DanceView where
 
 import           Data
+import           Data.List
+import           Control.Monad
 import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
 
@@ -40,11 +42,6 @@ toSkeleton Person {..} = Skeleton {..}
          : rightEar
          : leftEar
          : [])    = keyPoints
-
-        -- TODO: Work out a name. This should come from some sort
-        --       of person identification scheme.
-        name      = "n/a"
-
         -- [KeyPoint 910 720 0.4, ...]
         keyPoints = map (\[x, y, score] -> KeyPoint x y score) 
                         (chunksOf 3 poseKeyPoints)
@@ -126,3 +123,123 @@ round2 :: (Fractional a, RealFrac a) => a -> a
 round2 f = fromInteger (round $ f * (10^n)) / (10.0^^n)
     where
         n = 2 :: Int
+
+
+toList :: Skeleton2D -> [KeyPoint]
+toList Skeleton {..} =
+    [ nose
+    , neck
+    , rightShoulder
+    , rightElbow
+    , rightWrist
+    , leftShoulder
+    , leftElbow
+    , leftWrist
+    , rightHip
+    , rightKnee
+    , rightAnkle
+    , leftHip
+    , leftKnee
+    , leftAnkle
+    , rightEye
+    , leftEye
+    , rightEar
+    , leftEar
+    ]
+
+
+-- | For a given list of people (in a frame) and a second group of people (in
+--   a second, later, frame) compute the matchings; i.e. which people are the
+--   same?
+--
+--   Afterwards, we get a map which says "Person n in frame k is person m in
+--   frame (k+1)".
+--
+--   The first argument is the _later_ frame, and the second argument is the
+--   earlier one.
+matchings :: [Person] -> [Person] -> [(Person, Maybe Person)]
+matchings xs ys = foldl' g [] sorted
+    where
+        -- Match p1 and p2, unless p2 is already in cs,
+        -- in which case we'd assing nothing to p1.
+        --
+        -- TODO: Put some minimum bound on dh. If it's greater
+        -- than 100, then let's just say that nothing matches.
+        g cs (p1, p2, dh) = elt : cs
+            where
+                elt = if (Just p2) `elem` (map snd cs) then (p1, Nothing)
+                                                       else (p1, Just p2)
+
+        combs :: [(Person, Person)]
+        combs = ap (map (,) xs) ys
+        diffs = map (\(p1, p2) -> (p1, p2, toSkeleton p1 `cartesianDifference` toSkeleton p2)) combs
+
+        -- Sort things; smallest first
+        sorted = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
+
+
+-- | Given some matchings, update the names. We will either yield the same
+--   person from frame n, or the person from frame m with the name of the person
+--   from frame n.
+--
+--   TODO: This is the problem. We always need to be yielding the same person,
+--   just with a different name
+--
+applyMatchings :: [(Person, Maybe Person)] -> [Person]
+applyMatchings ms = map go ms
+    where
+        go (p,  Nothing) = p
+        -- Update the names
+        go (p1, Just p2) = setField @"name" (getField @"name" p2) p1
+
+
+diff :: KeyPoint -> KeyPoint -> Float
+diff k1 k2 = dh
+    where
+        dx = getField @"x" k1 - getField @"x" k2
+        dy = getField @"y" k1 - getField @"y" k2
+        dh = sqrt (dx ** 2 + dy ** 2)
+
+
+cartesianDifference :: Skeleton2D -> Skeleton2D -> Float
+cartesianDifference s1 s2 = average $ zipWith diff (toList s1) (toList s2)
+    where
+        average xs = sum xs / genericLength xs
+
+
+-- | Calculate the area of the bounding box of a given person. If we
+--   weren't able to determine any valid keypoints, just return the
+--   area as zero.
+area :: Person -> Float
+area p@Person {..} = go keyPoints
+    where
+        skeleton  = toSkeleton p
+        keyPoints = concat $ keyPointPaths True False skeleton
+
+        go [] = 0
+        go kpps = h * w
+            where
+                kx   = map (\KeyPoint {..} -> x) kpps
+                ky   = map (\KeyPoint {..} -> y) kpps
+                maxx = maximum kx
+                maxy = maximum ky
+                minx = minimum kx
+                miny = minimum ky
+                w    = maxx - minx
+                h    = maxy - miny
+
+
+-- | Take always the biggest person in the frame.
+takeLargest :: Frame Person -> Frame Person
+takeLargest frame@Frame {..} = newFrame (getField @"people" frame)
+    where
+        -- If there are no people, just return the frame,
+        -- otherwise return the biggest.
+        newFrame [] = frame
+        newFrame ps = setField @"people" [maximumBy biggest ps] frame
+        biggest a b = area a `compare` area b
+
+
+-- | Require that each frame has exactly one person.
+onePerson :: Frame Person -> Bool
+onePerson f = length (getField @"people" f) == 1

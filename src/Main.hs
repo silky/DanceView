@@ -41,6 +41,7 @@ import           Animation
 import           Gif
 import           Montage
 import           DanceView
+import           Data.List             hiding (find)
 import           Data.Generics.Record
 import           Control.Monad
 import           Options.Generic
@@ -59,21 +60,49 @@ main = do
 
     jsonFiles  <- find (depth ==? 0) (extension ==? ".json") (sourceDirectory opts)
 
-    frameDatas :: [FrameData] <- mapM readJson jsonFiles
+    frameDatas :: [FrameData PersonData] <- mapM readJson jsonFiles
 
-    let frames' = zipWith (flip smash . Frame []) [1..] frameDatas
-        frames  = if onlySolo opts then filter onePerson frames'
-                                   else frames'
+    let -- Hahaha ... A bit of insanity around assigning incremental ids to
+        -- people, which converts them to `Person` instead of `PersonData`.
+        fds :: [FrameData Person]
+        fds = map (\fd -> FrameData (
+                        zipWith (flip smash . Person []) [1..] (getField @"people" fd)
+                        )
+                  ) (drop 1000 $ take 2000 $ frameDatas)
+
+        -- | Munge them into frames with frame numbers
+        frames' :: [Frame Person]
+        frames' = zipWith (flip smash . Frame []) [1..] fds
+
+        -- | We now build up frame-pairs that is (frame_{n}, franem_{n+1}).
+        framePairs :: [(Frame Person, Frame Person)]
+        framePairs = zip frames' (tail frames')
+
+        -- | We then use those frame-pairs to update our frames with the
+        --   new people whom have their ids changed to be the right kind.
+        -- 
+        --   We need to update 2 based on 1, 3 based on 2, 4 based on 3,
+        --   and so on ...
+        matchedFrames' :: [Frame Person]
+        matchedFrames' = foldl' g [] framePairs
+            where
+                g fs (fp1, fp2) = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
+                matches a b     = matchings (getField @"people" a) (getField @"people" b)
+
+        matchedFrames  = fst (head framePairs) : matchedFrames'
+    
+    let frames = 
+            case filterOpt opts of 
+              Nothing          -> matchedFrames
+              Just OnlySolo    -> filter onePerson matchedFrames
+              Just TakeLargest -> map takeLargest matchedFrames
+
     case opts of
       DoAnimation {..} -> doAnimation frames opts
       DoMontage   {..} -> doMontage   frames opts
       DoGif       {..} -> doGif       frames opts
       JsonExport  {..} -> jsonExport  frames opts
 
-
--- | Require that each frame has exactly one person.
-onePerson :: Frame Person -> Bool
-onePerson f = length (getField @"people" f) == 1
 
 
 readJson :: (FromJSON a) => FilePath -> IO a
