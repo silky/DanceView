@@ -158,20 +158,21 @@ toList Skeleton {..} =
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
 matchings :: [Person] -> [Person] -> [(Person, Maybe Person)]
-matchings xs ys = foldl' g [] sorted
+matchings xs ys = foldr g [] sorted
     where
         -- Match p1 and p2, unless p2 is already in cs,
         -- in which case we'd assing nothing to p1.
         --
         -- TODO: Put some minimum bound on dh. If it's greater
         -- than 100, then let's just say that nothing matches.
-        g cs (p1, p2, dh) = elt : cs
+        g (p1, p2, _dh) cs = elt : cs
             where
                 elt = if (Just p2) `elem` (map snd cs) then (p1, Nothing)
                                                        else (p1, Just p2)
 
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
+        -- diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2))
         diffs = map (\(p1, p2) -> (p1, p2, toSkeleton p1 `cartesianDifference` toSkeleton p2)) combs
 
         -- Sort things; smallest first
@@ -198,7 +199,10 @@ diff k1 k2 = dh
     where
         dx = getField @"x" k1 - getField @"x" k2
         dy = getField @"y" k1 - getField @"y" k2
-        dh = sqrt (dx ** 2 + dy ** 2)
+        dh' = dx ** 2 + dy ** 2
+        dh  = if (getField @"score" k1 * getField @"score" k2) == 0
+                 then 0
+                 else dh'
 
 
 cartesianDifference :: Skeleton2D -> Skeleton2D -> Float
@@ -243,3 +247,22 @@ takeLargest frame@Frame {..} = newFrame (getField @"people" frame)
 -- | Require that each frame has exactly one person.
 onePerson :: Frame Person -> Bool
 onePerson f = length (getField @"people" f) == 1
+
+
+
+-- | We are given a big bunch of frames; say N. We would like
+--   to evenly sample `m` frames from this set. We will just 
+--   divide N by k and take every kth element.
+--
+--   [0, k*(N/m), ... | k <- [0..m]]
+--
+--  e.g. k = 2
+--
+--   [0, N/2]
+--
+sampleFrames :: Int -> [Frame Person] -> [Frame Person]
+sampleFrames quantity inFrames = frames
+    where
+        totalFrames = length inFrames
+        stepSize    = totalFrames `div` quantity
+        frames      = [ inFrames !! (k * stepSize) | k <- [0 .. quantity] ]

@@ -41,12 +41,12 @@ import           Animation
 import           Gif
 import           Montage
 import           DanceView
-import           Data.List             hiding (find)
 import           Data.Generics.Record
 import           Control.Monad
 import           Options.Generic
 import           Data.Maybe
 import           Data.Aeson
+import           System.Random
 import           System.FilePath
 import           System.FilePath.Find   hiding (directory)
 import           Data.String.Conv       (toS)
@@ -66,9 +66,12 @@ main = do
         -- people, which converts them to `Person` instead of `PersonData`.
         fds :: [FrameData Person]
         fds = map (\fd -> FrameData (
-                        zipWith (flip smash . Person []) [1..] (getField @"people" fd)
+                        zipWith (flip smash . Person []) nums (getField @"people" fd)
                         )
-                  ) (drop 1000 $ take 2000 $ frameDatas)
+                  ) (drop 500 $ take 2000 $ frameDatas)
+
+        -- | There'll never be more than 100 people in a frame ...
+        nums = randomRs (0, 100) (mkStdGen 1)
 
         -- | Munge them into frames with frame numbers
         frames' :: [Frame Person]
@@ -84,9 +87,9 @@ main = do
         --   We need to update 2 based on 1, 3 based on 2, 4 based on 3,
         --   and so on ...
         matchedFrames' :: [Frame Person]
-        matchedFrames' = foldl' g [] framePairs
+        matchedFrames' = foldr g [] framePairs
             where
-                g fs (fp1, fp2) = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
+                g (fp1, fp2) fs = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
                 matches a b     = matchings (getField @"people" a) (getField @"people" b)
 
         matchedFrames  = fst (head framePairs) : matchedFrames'

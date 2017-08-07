@@ -16,7 +16,6 @@ module Gif where
 import           Data
 import           DanceView
 import           DiagramsStuff
-import           Data.Generics.Record
 import           Diagrams.Prelude             hiding (Options)
 import           Diagrams.Backend.Rasterific  hiding (Options)
 
@@ -26,10 +25,12 @@ doGif allFrames opts = do
     let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
         delay   = round $ fps opts
 
-    let totalFrames = length allFrames
-        stepSize    = 5
-        frameCount  = totalFrames `div` stepSize
-        frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
+    -- TODO: Skip frames? Let below?
+    let frames = allFrames
+    -- let totalFrames = length allFrames
+    --     stepSize    = 5
+    --     frameCount  = totalFrames `div` stepSize
+    --     frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
 
     let cs       = randColours 3
         diagrams = zipWith (\f c -> asDiagrams opts c f) frames cs

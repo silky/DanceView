@@ -12,6 +12,7 @@
 module Montage where
 
 import           Data
+import           DanceView
 import           DiagramsStuff
 import           Data.List.Split        (divvy)
 import           Diagrams.Prelude       hiding (Options)
@@ -20,23 +21,21 @@ import           Diagrams.Backend.Cairo
 -- 35 inches = 3360 px
 -- 20 inches = 1920 px
 
+-- TODO:
+--  - WHY is it overwriting the numbers? Is confusing ...
+--          Maybe could output a number of people or something?
+
 doMontage :: [Frame Person] -> Options -> IO ()
 doMontage allFrames opts = do
-    -- First we need to pick out rows*columns frames. We should pick them so
-    -- that they are evenly spaced
-    let frameCount  = rows opts * columns opts
-        totalFrames = length allFrames
-        stepSize    = totalFrames `div` frameCount
-        frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
-
-    -- Now, having an even selection of frames, we need to render them
-    let cs       = randColours 3
-        diagrams = zipWith (flip (asDiagrams opts)) frames cs
+    let frames  = sampleFrames (rows opts * columns opts) allFrames
+ 
+    -- | Convert the frames into a convient row & column based rendering
+    let seed     = 3
+        diagrams = zipWith (flip (asDiagrams opts)) frames (randColours seed)
         gridded  = divvy (columns opts) (columns opts) diagrams
         joined   = vcat (map hcat gridded)
-    
 
     let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
-        diagram = joined # bg white
+        diagram = joined
 
     renderCairo (outFile opts) outSize diagram
