@@ -19,6 +19,8 @@ import           Data.List
 import           Control.Monad
 import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
+import           Debug.Trace
+
 
 toSkeleton :: Person -> Skeleton2D
 toSkeleton Person {..} = Skeleton {..}
@@ -158,14 +160,20 @@ toList Skeleton {..} =
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
 matchings :: [Person] -> [Person] -> [(Person, Maybe Person)]
-matchings xs ys = foldr g [] nubbed
+matchings xs ys = proposed
+    -- traceShow ("nubbed: " ++ show ff ++ "..after.." ++ show fg) $ proposed
     where
+        -- TODO: It's the diff between foldl and foldr again. Basically, I
+        -- just need it to walk these lists in order!
+        new' = foldl' g [] sorted
+        -- fg = map (\(p, mp) -> (getField @"name" p, fmap (getField @"name") mp)) r
+        -- ff = map (\(p1, p2, d) -> (getField @"name" p1, getField @"name" p2, d)) nubbed
         -- Match p1 and p2, unless p2 is already in cs,
         -- in which case we'd assing nothing to p1.
         --
         -- TODO: Put some minimum bound on dh. If it's greater
         -- than 100, then let's just say that nothing matches.
-        g (p1, p2, _dh) cs = elt : cs
+        g cs (p1, p2, _dh) = elt : cs
             where
                 elt = if Just p2 `elem` map snd cs
                          then (p1, Nothing)
@@ -174,36 +182,16 @@ matchings xs ys = foldr g [] nubbed
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
 
-        diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2)))) combs
-        -- diffs = map (\(p1, p2) -> ( p1
-        --                           , p2
-        --                           , toSkeleton p1 `cartesianDifference` toSkeleton p2
-        --                           )) combs
+        -- diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2)))) combs
+        diffs = map (\(p1, p2) -> ( p1
+                                  , p2
+                                  , toSkeleton p1 `cartesianDifference` toSkeleton p2
+                                  )) combs
 
         -- Sort things; smallest first
-        sorted = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
-
-        -- Suppose we have:
-        --
-        --   [1,2] and [2,3]
-        --
-        -- Then we get:
-        --
-        --       ("1", "2", 1)
-        --       ("1", "3", 9)
-        --       ("2", "2", 100)
-        --       ("2", "3", 5100)
-        --
-        -- and this just needs to be transformed into:
-        --
-        --       ("1", "2", 1)
-        --       ("2", "2", 100)
-        --
-        -- hence the nubbing.
-        --
-        -- Note here that our preference is for mapping things in p1. We could
-        -- also go the other way.
-        nubbed = nubBy (\(p1, _, _) (p2, _, _) -> p1 == p2) sorted
+        sorted   = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
+        noMaybes = filter (\(_, m) -> m /= Nothing) new'
+        proposed = nubBy (\(p1, _) (p2, _) -> p1 == p2) (reverse noMaybes)
 
 
 -- | Given some matchings, update the names. We will either yield the same
@@ -224,18 +212,24 @@ applyMatchings = map go
 diff :: KeyPoint -> KeyPoint -> Float
 diff k1 k2 = dh
     where
-        dx = getField @"x" k1 - getField @"x" k2
-        dy = getField @"y" k1 - getField @"y" k2
+        s1 = getField @"score" k1
+        s2 = getField @"score" k2
+
+        dx = (s1 * getField @"x" k1) - (s2 * getField @"x" k2)
+        dy = (s1 * getField @"y" k1) - (s2 * getField @"y" k2)
+
         dh' = dx ** 2 + dy ** 2
-        dh  = if (getField @"score" k1 * getField @"score" k2) == 0
+        dh  = if s1 * s2 == 0
                  then 0
                  else dh'
 
 
 cartesianDifference :: Skeleton2D -> Skeleton2D -> Float
-cartesianDifference s1 s2 = average $ zipWith diff (toList s1) (toList s2)
+cartesianDifference s1 s2 = dd
+    -- traceShow ("dd: " ++ show dd) $ dd
     where
         average xs = sum xs / genericLength xs
+        dd = average $ zipWith diff (toList s1) (toList s2)
 
 
 -- | Calculate the area of the bounding box of a given person. If we

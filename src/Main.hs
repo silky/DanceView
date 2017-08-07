@@ -12,19 +12,16 @@
 {-# LANGUAGE UndecidableInstances      #-}
 {-# LANGUAGE DataKinds                 #-}
 
--- TODO:
---
--- Use "start" and "end" times.
--- Body Rotation Options?
--- Filter Out Non-Moving People?
+-- TODO: Use "start" and "end" times.
+-- TODO: Body Rotation Options?
+-- TODO: Filter Out Non-Moving People?
 --
 -- TODO: Print time
 --
 -- TODO: It currently crashes when it ends. We should stop the animation (or
 -- loop it) when we run out of time.
 --
--- TODO:
---   - If we're going for POAM we need to have a bunch of configurations that
+-- TODO: If we're going for POAM we need to have a bunch of configurations that
 --   let us design a particular item and then emit a file of the right type.
 --
 --   Basically, we need to cut off the thing. Then it works.
@@ -75,7 +72,7 @@ main = do
         frames' :: [Frame Person]
         frames' = zipWith (flip smash . Frame []) [1..] fds
 
-        -- | We now build up frame-pairs that is (frame_{n}, franem_{n+1}).
+        -- | We now build up frame-pairs that is (frame_{n}, frame_{n+1}).
         framePairs :: [(Frame Person, Frame Person)]
         framePairs = zip frames' (tail frames')
 
