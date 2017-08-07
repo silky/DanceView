@@ -59,7 +59,7 @@ asDiagrams opts colour frame = mconcat [names, frameInfo, bones, r]
         namedXy' p@Person {..} = (text (show name) 
                                     # fc black 
                                     # fontSizeL 60
-                                    <> circle 70 # fc cyan
+                                    -- <> circle 70 # fc cyan
                                 )
                                 # translate (r2 (xy (nameKeyPoint p)))
                                 # translate reasonableOrigin
