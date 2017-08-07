@@ -167,18 +167,18 @@ matchings xs ys = foldr g [] nubbed
         -- than 100, then let's just say that nothing matches.
         g (p1, p2, _dh) cs = elt : cs
             where
-                elt = if (Just p2) `elem` (map snd cs) 
+                elt = if Just p2 `elem` map snd cs
                          then (p1, Nothing)
                          else (p1, Just p2)
 
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
 
-        -- diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2))
-        diffs = map (\(p1, p2) -> ( p1
-                                  , p2
-                                  , toSkeleton p1 `cartesianDifference` toSkeleton p2
-                                  )) combs
+        diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2)))) combs
+        -- diffs = map (\(p1, p2) -> ( p1
+        --                           , p2
+        --                           , toSkeleton p1 `cartesianDifference` toSkeleton p2
+        --                           )) combs
 
         -- Sort things; smallest first
         sorted = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
@@ -214,7 +214,7 @@ matchings xs ys = foldr g [] nubbed
 --   just with a different name
 --
 applyMatchings :: [(Person, Maybe Person)] -> [Person]
-applyMatchings ms = map go ms
+applyMatchings = map go
     where
         go (p,  Nothing) = p
         -- Update the names

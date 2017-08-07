@@ -52,7 +52,7 @@ asDiagrams opts colour frame = mconcat [names, frameInfo, bones, r]
         -- If the keypoint we're going to draw the text at has no confidence,
         -- then don't bother to draw a label at all.
         nameKeyPoint p = neck (toSkeleton p)
-        namedXy p = if (getField @"score" (nameKeyPoint p)) == 0
+        namedXy p = if getField @"score" (nameKeyPoint p) == 0
                        then mempty
                        else namedXy' p
 

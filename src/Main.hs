@@ -65,10 +65,8 @@ main = do
     let -- Hahaha ... A bit of insanity around assigning incremental ids to
         -- people, which converts them to `Person` instead of `PersonData`.
         fds :: [FrameData Person]
-        fds = map (\fd -> FrameData (
-                        zipWith (flip smash . Person []) nums (getField @"people" fd)
-                        )
-                  ) (drop 500 $ take 2000 $ frameDatas)
+        fds = map (FrameData .  zipWith (flip smash . Person []) nums . getField @"people")
+                  (drop 500 $ take 2000 frameDatas)
 
         -- | There'll never be more than 100 people in a frame ...
         nums = randomRs (0, 100) (mkStdGen 1)
@@ -92,8 +90,6 @@ main = do
                 g (fp1, fp2) fs = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
                 matches a b     = matchings (getField @"people" a) (getField @"people" b)
 
-        -- TODO: Somehow, this matching thing is INCREASING the number of
-        --       people!!
         matchedFrames  = fst (head framePairs) : matchedFrames'
     
     let frames = 

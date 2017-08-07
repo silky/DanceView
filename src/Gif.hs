@@ -5,9 +5,7 @@
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE OverloadedStrings         #-}
-{-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
-{-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 
@@ -33,6 +31,6 @@ doGif allFrames opts = do
     --     frames      = [ allFrames !! (stepSize * n) | n <- [0 .. frameCount - 1] ]
 
     let cs       = randColours 3
-        diagrams = zipWith (\f c -> asDiagrams opts c f) frames cs
+        diagrams = zipWith (flip (asDiagrams opts)) frames cs
 
     animatedGif (outFile opts) outSize LoopingForever delay diagrams

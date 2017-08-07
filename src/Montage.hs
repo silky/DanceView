@@ -21,10 +21,6 @@ import           Diagrams.Backend.Cairo
 -- 35 inches = 3360 px
 -- 20 inches = 1920 px
 
--- TODO:
---  - WHY is it overwriting the numbers? Is confusing ...
---          Maybe could output a number of people or something?
-
 doMontage :: [Frame Person] -> Options -> IO ()
 doMontage allFrames opts = do
     let frames  = sampleFrames (rows opts * columns opts) allFrames
