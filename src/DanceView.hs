@@ -158,7 +158,7 @@ toList Skeleton {..} =
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
 matchings :: [Person] -> [Person] -> [(Person, Maybe Person)]
-matchings xs ys = foldr g [] sorted
+matchings xs ys = foldr g [] nubbed
     where
         -- Match p1 and p2, unless p2 is already in cs,
         -- in which case we'd assing nothing to p1.
@@ -167,16 +167,43 @@ matchings xs ys = foldr g [] sorted
         -- than 100, then let's just say that nothing matches.
         g (p1, p2, _dh) cs = elt : cs
             where
-                elt = if (Just p2) `elem` (map snd cs) then (p1, Nothing)
-                                                       else (p1, Just p2)
+                elt = if (Just p2) `elem` (map snd cs) 
+                         then (p1, Nothing)
+                         else (p1, Just p2)
 
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
+
         -- diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2))
-        diffs = map (\(p1, p2) -> (p1, p2, toSkeleton p1 `cartesianDifference` toSkeleton p2)) combs
+        diffs = map (\(p1, p2) -> ( p1
+                                  , p2
+                                  , toSkeleton p1 `cartesianDifference` toSkeleton p2
+                                  )) combs
 
         -- Sort things; smallest first
         sorted = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
+
+        -- Suppose we have:
+        --
+        --   [1,2] and [2,3]
+        --
+        -- Then we get:
+        --
+        --       ("1", "2", 1)
+        --       ("1", "3", 9)
+        --       ("2", "2", 100)
+        --       ("2", "3", 5100)
+        --
+        -- and this just needs to be transformed into:
+        --
+        --       ("1", "2", 1)
+        --       ("2", "2", 100)
+        --
+        -- hence the nubbing.
+        --
+        -- Note here that our preference is for mapping things in p1. We could
+        -- also go the other way.
+        nubbed = nubBy (\(p1, _, _) (p2, _, _) -> p1 == p2) sorted
 
 
 -- | Given some matchings, update the names. We will either yield the same

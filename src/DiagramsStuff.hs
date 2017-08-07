@@ -56,7 +56,7 @@ asDiagrams opts colour frame = mconcat [names, frameInfo, bones, r]
                        then mempty
                        else namedXy' p
 
-        namedXy' p@Person {..} = (text (show name) 
+        namedXy' p@Person {..} = (text (show name)  
                                     # fc black 
                                     # fontSizeL 60
                                     -- <> circle 70 # fc cyan
@@ -64,7 +64,8 @@ asDiagrams opts colour frame = mconcat [names, frameInfo, bones, r]
                                 # translate (r2 (xy (nameKeyPoint p)))
                                 # translate reasonableOrigin
 
-        frameInfo = baselineText (show (frameNumber frame))
+        frameDeets = "#" ++ show (frameNumber frame) ++ ", " ++ show (length peeps) ++ " people."
+        frameInfo = baselineText frameDeets
                          # fc red
                          # fontSizeL 50
                          # translate reasonableOrigin

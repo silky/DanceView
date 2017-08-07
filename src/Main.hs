@@ -92,6 +92,8 @@ main = do
                 g (fp1, fp2) fs = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
                 matches a b     = matchings (getField @"people" a) (getField @"people" b)
 
+        -- TODO: Somehow, this matching thing is INCREASING the number of
+        --       people!!
         matchedFrames  = fst (head framePairs) : matchedFrames'
     
     let frames = 
