@@ -84,8 +84,8 @@ instance ParseRecord (Options' Wrapped) where
 
 -- | A person, as found in the pose output JSON.
 data Person = Person
-    { poseKeyPoints :: [Float]
-    , name          :: !Integer
+    { poseKeyPoints :: ![Float]
+    , name          :: !String
     } deriving (Show, Generic, Eq)
 
 instance ToJSON Person
@@ -137,8 +137,8 @@ data Skeleton a = Skeleton
 
     -- | The name of this skeleton. Used for identification
     --   purposes.
-    , name          :: !Integer
-    } deriving (Show, Generic)
+    , name          :: !String
+    } deriving (Show, Generic, Eq)
 
 instance ToJSON (Skeleton KeyPoint)
 instance ToJSON (Skeleton ThreePoint)
@@ -152,7 +152,7 @@ type Skeleton3D = Skeleton ThreePoint
 --   have a list of "Person"'s, and at other times we'll like
 --   to have a list of "Skeleton"s.
 data Frame a = Frame
-    { people      :: [a]
+    { people      :: ![a]
     , frameNumber :: !Integer
     } deriving (Show, Generic)
 

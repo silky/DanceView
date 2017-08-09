@@ -58,7 +58,7 @@ toThreePoint opts depthMap KeyPoint {..} = ThreePoint
     }
         where
             ly = length depthMap
-            lx = length $ head depthMap
+            lx = length (head depthMap)
 
             x' = round $ x * fromIntegral (lx `div` videoWidth  opts)
             y' = round $ y * fromIntegral (ly `div` videoHeight opts)
@@ -159,74 +159,74 @@ toList Skeleton {..} =
 --
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
-matchings :: [Person] -> [Person] -> [(Person, Maybe Person)]
-matchings xs ys = proposed
-    -- traceShow ("nubbed: " ++ show ff ++ "..after.." ++ show fg) $ proposed
+matchings :: (Integer, Integer) -> [Person] -> [Person] -> [(Person, Person, Float)]
+matchings fr xs ys = 
+    traceShow (take 20 (repeat '-')) $ traceShow fr $ traceShow pp $ traceShow dd $ updates
     where
-        -- TODO: It's the diff between foldl and foldr again. Basically, I
-        -- just need it to walk these lists in order!
-        new' = foldl' g [] sorted
-        -- fg = map (\(p, mp) -> (getField @"name" p, fmap (getField @"name") mp)) r
-        -- ff = map (\(p1, p2, d) -> (getField @"name" p1, getField @"name" p2, d)) nubbed
-        -- Match p1 and p2, unless p2 is already in cs,
-        -- in which case we'd assing nothing to p1.
-        --
-        -- TODO: Put some minimum bound on dh. If it's greater
-        -- than 100, then let's just say that nothing matches.
-        g cs (p1, p2, _dh) = elt : cs
-            where
-                elt = if Just p2 `elem` map snd cs
-                         then (p1, Nothing)
-                         else (p1, Just p2)
-
+        pp = map (\(p1, p2, s) -> (getField @"name" p1, getField @"name" p2, s)) updates 
+        dd = map (\(p1, p2, d) -> (getField @"name" p1, getField @"name" p2, d)) diffs
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
 
-        -- diffs = map (\(p1, p2) -> (p1, p2, diff (neck (toSkeleton p1)) (neck (toSkeleton p2)))) combs
-        diffs = map (\(p1, p2) -> ( p1
-                                  , p2
-                                  , toSkeleton p1 `cartesianDifference` toSkeleton p2
-                                  )) combs
+        -- Match p1 and p2, unless p2 is already in cs,
+        -- in which case we'd assing nothing to p1.
+        skelCombs  = map    (\(p1, p2) -> (p1, p2, toSkeleton p1, toSkeleton p2)) combs
+        zero s     = length (filter (\KeyPoint {..} -> score  == 0) (toList s))
+        nonZeroKps = 4
+        fairCombs  = filter (\(_, _, s1, s2) -> abs (zero s1 - zero s2) <= nonZeroKps) skelCombs
+        diffs      = map    (\(p1, p2, s1, s2) -> ( p1
+                                                  , p2 
+                                                  , s1 `cartesianDifference` s2
+                                                  )) fairCombs
 
-        -- Sort things; smallest first
-        sorted   = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2) diffs
-        noMaybes = filter (\(_, m) -> m /= Nothing) new'
-        proposed = nubBy (\(p1, _) (p2, _) -> p1 == p2) (reverse noMaybes)
+        updates = foldl' f [] xs
+        f xs' p = go (distanceSort (filterDown xs' p)) ++ xs'
+            where
+                -- TODO: This is lame; but I can fix it later.
+                go []    = []
+                go (x:_) = [x]
+
+        filterDown xs' p = filter (\(p1, p2, _) -> p1 == p && p2 `notElem` map (\(_, p', _) -> p') xs') diffs
+        distanceSort     = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2)
+
 
 
 -- | Given some matchings, update the names. We will either yield the same
 --   person from frame n, or the person from frame m with the name of the person
 --   from frame n.
---
---   TODO: This is the problem. We always need to be yielding the same person,
---   just with a different name
---
-applyMatchings :: [(Person, Maybe Person)] -> [Person]
+applyMatchings :: [(Person, Person, Float)] -> [Person]
 applyMatchings = map go
     where
-        go (p,  Nothing) = p
-        -- Update the names
-        go (p1, Just p2) = setField @"name" (getField @"name" p2) p1
+        maxDist = 10
+        go (p1, p2, s) = if s > maxDist
+                            -- No change
+                            then p1
+                            -- Close enough, so change.
+                            else setField @"name" (getField @"name" p2) p1
 
 
 diff :: KeyPoint -> KeyPoint -> Float
-diff k1 k2 = dh
+diff k1 k2 = traceShow (show k1 ++ show k2 ++ show dh) $ dh
     where
         s1 = getField @"score" k1
         s2 = getField @"score" k2
 
-        dx = (s1 * getField @"x" k1) - (s2 * getField @"x" k2)
-        dy = (s1 * getField @"y" k1) - (s2 * getField @"y" k2)
+        dx = getField @"x" k1 - getField @"x" k2
+        dy = getField @"y" k1 - getField @"y" k2
 
-        dh' = dx ** 2 + dy ** 2
-        dh  = if s1 * s2 == 0
-                 then 0
-                 else dh'
+        dh' = sqrt $ dx ** 2 + dy ** 2
+
+        -- | This is a generous scheme. If one of these things are 0, we'll
+        --   just allow them to be equal. This is because sometimes we may
+        --   lose some bit of information; like the nose, but it will come
+        --   back in subsequent frames.
+        dh = if s1 * s2 == 0
+                then 0
+                else dh'
 
 
 cartesianDifference :: Skeleton2D -> Skeleton2D -> Float
-cartesianDifference s1 s2 = dd
-    -- traceShow ("dd: " ++ show dd) $ dd
+cartesianDifference s1 s2 = traceShow (getField @"name" s1 ++ " vs " ++ getField @"name" s2) $ dd
     where
         average xs = sum xs / genericLength xs
         dd = average $ zipWith diff (toList s1) (toList s2)

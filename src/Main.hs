@@ -27,8 +27,6 @@
 --   Basically, we need to cut off the thing. Then it works.
 --
 -- TODO: Visible body-part count filter
---
--- TODO: Person Re-Identification
 
 module Main where
 
@@ -43,12 +41,12 @@ import           Control.Monad
 import           Options.Generic
 import           Data.Maybe
 import           Data.Aeson
-import           System.Random
 import           System.FilePath
 import           System.FilePath.Find   hiding (directory)
 import           Data.String.Conv       (toS)
 import qualified Data.ByteString        as B
 import qualified Data.ByteString.Lazy   as LB
+
 
 
 main :: IO ()
@@ -59,22 +57,31 @@ main = do
 
     frameDatas :: [FrameData PersonData] <- mapM readJson jsonFiles
 
-    let -- Hahaha ... A bit of insanity around assigning incremental ids to
-        -- people, which converts them to `Person` instead of `PersonData`.
-        fds :: [FrameData Person]
-        fds = map (FrameData .  zipWith (flip smash . Person []) nums . getField @"people")
+    let fds :: [FrameData Person]
+        fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
                   (drop 500 $ take 2000 frameDatas)
 
-        -- | There'll never be more than 100 people in a frame ...
-        nums = randomRs (0, 100) (mkStdGen 1)
+        nums :: [Integer]
+        nums = [1..]
 
-        -- | Munge them into frames with frame numbers
+        names = map show nums
+
+        -- | Munge them into frames with frame numbers.
         frames' :: [Frame Person]
         frames' = zipWith (flip smash . Frame []) [1..] fds
 
         -- | We now build up frame-pairs that is (frame_{n}, frame_{n+1}).
         framePairs :: [(Frame Person, Frame Person)]
-        framePairs = zip frames' (tail frames')
+        framePairs = zip (nameLeft frames') (tail (nameRight frames'))
+
+        nameLeft  = namePeeps names
+        nameRight = namePeeps (map show (cycle ['a'..'z']))
+        namePeeps names' = map (\f -> setField @"people" (newPeeps (getField @"people" f)) f)
+            where
+                -- We're just going to flat-out update things in arbitrary
+                -- order.
+                newPeeps :: [Person] -> [Person]
+                newPeeps = zipWith (setField @"name") names'
 
         -- | We then use those frame-pairs to update our frames with the
         --   new people whom have their ids changed to be the right kind.
@@ -85,7 +92,8 @@ main = do
         matchedFrames' = foldr g [] framePairs
             where
                 g (fp1, fp2) fs = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
-                matches a b     = matchings (getField @"people" a) (getField @"people" b)
+                matches a b     = matchings (getField @"frameNumber" a, getField @"frameNumber" b) 
+                                            (getField @"people" a) (getField @"people" b)
 
         matchedFrames  = fst (head framePairs) : matchedFrames'
     

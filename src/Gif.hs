@@ -12,7 +12,6 @@
 module Gif where
 
 import           Data
-import           DanceView
 import           DiagramsStuff
 import           Diagrams.Prelude             hiding (Options)
 import           Diagrams.Backend.Rasterific  hiding (Options)
