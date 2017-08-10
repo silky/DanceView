@@ -19,7 +19,6 @@ import           Data.List
 import           Control.Monad
 import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
-import           Debug.Trace
 
 
 toSkeleton :: Person -> Skeleton2D
@@ -150,6 +149,12 @@ toList Skeleton {..} =
     ]
 
 
+
+
+-- TODO: We need to take a generate for names, and then pull them off the
+--       thing in order to give them names.
+
+
 -- | For a given list of people (in a frame) and a second group of people (in
 --   a second, later, frame) compute the matchings; i.e. which people are the
 --   same?
@@ -159,12 +164,9 @@ toList Skeleton {..} =
 --
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
-matchings :: (Integer, Integer) -> [Person] -> [Person] -> [(Person, Person, Float)]
-matchings fr xs ys = 
-    traceShow (take 20 (repeat '-')) $ traceShow fr $ traceShow pp $ traceShow dd $ updates
+matchings :: [Person] -> [Person] -> [(Person, Person, Float)]
+matchings xs ys = updates
     where
-        pp = map (\(p1, p2, s) -> (getField @"name" p1, getField @"name" p2, s)) updates 
-        dd = map (\(p1, p2, d) -> (getField @"name" p1, getField @"name" p2, d)) diffs
         combs :: [(Person, Person)]
         combs = ap (map (,) xs) ys
 
@@ -173,7 +175,7 @@ matchings fr xs ys =
         skelCombs  = map    (\(p1, p2) -> (p1, p2, toSkeleton p1, toSkeleton p2)) combs
         zero s     = length (filter (\KeyPoint {..} -> score  == 0) (toList s))
         maxZeroKps = 6
-        --
+    
         -- Remove those combinations where the skeletons are unevenly
         -- complete.
         fairCombs  = filter (\(_, _, s1, s2) -> abs (zero s1 - zero s2) <= maxZeroKps) skelCombs
@@ -185,7 +187,6 @@ matchings fr xs ys =
         updates = foldl' f [] xs
         f xs' p = go (distanceSort (filterDown xs' p)) ++ xs'
             where
-                -- TODO: This is lame; but I can fix it later.
                 go []    = []
                 go (x:_) = [x]
 
@@ -202,14 +203,13 @@ applyMatchings = map go
     where
         maxDist = 100
         go (p1, p2, s) = if s > maxDist
-                            -- No change
                             then p1
                             -- Close enough, so change.
                             else setField @"name" (getField @"name" p2) p1
 
 
 diff :: KeyPoint -> KeyPoint -> Float
-diff k1 k2 = traceShow (show k1 ++ show k2 ++ show dh) $ dh
+diff k1 k2 = dh
     where
         s1 = getField @"score" k1
         s2 = getField @"score" k2
@@ -229,7 +229,7 @@ diff k1 k2 = traceShow (show k1 ++ show k2 ++ show dh) $ dh
 
 
 cartesianDifference :: Skeleton2D -> Skeleton2D -> Float
-cartesianDifference s1 s2 = traceShow (getField @"name" s1 ++ " vs " ++ getField @"name" s2) $ dd
+cartesianDifference s1 s2 = dd
     where
         average xs = sum xs / genericLength xs
         dd = average $ zipWith diff (toList s1) (toList s2)

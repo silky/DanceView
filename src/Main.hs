@@ -41,6 +41,7 @@ import           Control.Monad
 import           Options.Generic
 import           Data.Maybe
 import           Data.Aeson
+import           System.Random
 import           System.FilePath
 import           System.FilePath.Find   hiding (directory)
 import           Data.String.Conv       (toS)
@@ -58,44 +59,34 @@ main = do
 
     let fds :: [FrameData Person]
         fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
-                  (drop 500 $ take 2000 frameDatas)
+                  frameDatas
+                  -- (drop 500 $ take 2000 frameDatas)
 
         nums :: [Integer]
-        nums = [1..]
-
-        names = map show nums
+        nums = randomRs (0, 100) (mkStdGen 1)
 
         -- | Munge them into frames with frame numbers.
         frames' :: [Frame Person]
         frames' = zipWith (flip smash . Frame []) [1..] fds
 
-        -- | We now build up frame-pairs that is (frame_{n}, frame_{n+1}).
-        framePairs :: [(Frame Person, Frame Person)]
-        framePairs = zip (nameLeft frames') (tail (nameRight frames'))
-
-        nameLeft  = namePeeps names
-        nameRight = namePeeps (map show (cycle ['a'..'z']))
         namePeeps names' = map (\f -> setField @"people" (newPeeps (getField @"people" f)) f)
             where
-                -- We're just going to flat-out update things in arbitrary
-                -- order.
                 newPeeps :: [Person] -> [Person]
                 newPeeps = zipWith (setField @"name") names'
 
-        -- | We then use those frame-pairs to update our frames with the
-        --   new people whom have their ids changed to be the right kind.
-        -- 
-        --   We need to update 2 based on 1, 3 based on 2, 4 based on 3,
-        --   and so on ...
-        matchedFrames' :: [Frame Person]
-        matchedFrames' = foldr g [] framePairs
+        namedFrames = namePeeps (map show nums) frames'
+        
+        -- | We need to update 2 based on 1, 3 based on 2, 4 based on 3,
+        --    and so on ...
+        matchedFrames :: [Frame Person]
+        matchedFrames = foldr g [head namedFrames] namedFrames
             where
-                g (fp1, fp2) fs = setField @"people" (applyMatchings (matches fp2 fp1)) fp2 : fs
-                matches a b     = matchings (getField @"frameNumber" a, getField @"frameNumber" b) 
-                                            (getField @"people" a) (getField @"people" b)
+                -- By construction this match will never fail, but it's
+                -- probably bad form and could be cleaned up.
+                g fnp1 fs@(fn:_a) = setField @"people" (applyMatchings (matches fnp1 fn)) fnp1 : fs
+                matches a b = matchings (getField @"people" a)
+                                        (getField @"people" b)
 
-        matchedFrames  = fst (head framePairs) : matchedFrames'
-    
     let frames = 
             case filterOpt opts of 
               Nothing          -> matchedFrames
