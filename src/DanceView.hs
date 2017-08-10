@@ -172,8 +172,11 @@ matchings fr xs ys =
         -- in which case we'd assing nothing to p1.
         skelCombs  = map    (\(p1, p2) -> (p1, p2, toSkeleton p1, toSkeleton p2)) combs
         zero s     = length (filter (\KeyPoint {..} -> score  == 0) (toList s))
-        nonZeroKps = 4
-        fairCombs  = filter (\(_, _, s1, s2) -> abs (zero s1 - zero s2) <= nonZeroKps) skelCombs
+        maxZeroKps = 6
+        --
+        -- Remove those combinations where the skeletons are unevenly
+        -- complete.
+        fairCombs  = filter (\(_, _, s1, s2) -> abs (zero s1 - zero s2) <= maxZeroKps) skelCombs
         diffs      = map    (\(p1, p2, s1, s2) -> ( p1
                                                   , p2 
                                                   , s1 `cartesianDifference` s2
@@ -197,7 +200,7 @@ matchings fr xs ys =
 applyMatchings :: [(Person, Person, Float)] -> [Person]
 applyMatchings = map go
     where
-        maxDist = 10
+        maxDist = 100
         go (p1, p2, s) = if s > maxDist
                             -- No change
                             then p1

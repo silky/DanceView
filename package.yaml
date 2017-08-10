@@ -31,15 +31,27 @@ dependencies:
   - string-conv
   - text
 
+
 executables:
   dance-view:
     ghc-options:      -threaded -Wall -O2
     source-dirs:      src
     main:             Main.hs
     other-modules:    
-        - Animation
-        - DanceView
-        - Data
-        - Gif
-        - Montage
-        - DiagramsStuff
+      - Animation
+      - DanceView
+      - Data
+      - Gif
+      - Montage
+      - DiagramsStuff
+
+
+tests:
+    spec:
+        main: Differences.hs
+        source-dirs: 
+            - tests
+            - src
+        dependencies:
+            - hspec == 2.*
+            - aeson-qq
