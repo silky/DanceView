@@ -149,12 +149,6 @@ toList Skeleton {..} =
     ]
 
 
-
-
--- TODO: We need to take a generate for names, and then pull them off the
---       thing in order to give them names.
-
-
 -- | For a given list of people (in a frame) and a second group of people (in
 --   a second, later, frame) compute the matchings; i.e. which people are the
 --   same?
@@ -164,7 +158,7 @@ toList Skeleton {..} =
 --
 --   The first argument is the _later_ frame, and the second argument is the
 --   earlier one.
-matchings :: [Person] -> [Person] -> [(Person, Person, Float)]
+matchings :: [Person] -> [Person] -> [(Person, Maybe Person, Float)]
 matchings xs ys = updates
     where
         combs :: [(Person, Person)]
@@ -180,15 +174,15 @@ matchings xs ys = updates
         -- complete.
         fairCombs  = filter (\(_, _, s1, s2) -> abs (zero s1 - zero s2) <= maxZeroKps) skelCombs
         diffs      = map    (\(p1, p2, s1, s2) -> ( p1
-                                                  , p2 
+                                                  , Just p2 
                                                   , s1 `cartesianDifference` s2
                                                   )) fairCombs
 
-        updates = foldl' f [] xs
-        f xs' p = go (distanceSort (filterDown xs' p)) ++ xs'
+        updates  = foldl' f [] xs
+        f xs' p = go (distanceSort (filterDown xs' p)) : xs'
             where
-                go []    = []
-                go (x:_) = [x]
+                go []    = (p, Nothing, 0/0)
+                go (x:_) = x
 
         filterDown xs' p = filter (\(p1, p2, _) -> p1 == p && p2 `notElem` map (\(_, p', _) -> p') xs') diffs
         distanceSort     = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2)
@@ -196,16 +190,16 @@ matchings xs ys = updates
 
 
 -- | Given some matchings, update the names. We will either yield the same
---   person from frame n, or the person from frame m with the name of the person
---   from frame n.
-applyMatchings :: [(Person, Person, Float)] -> [Person]
-applyMatchings = map go
+--   person from frame n, or a new name, because they can't keep their old
+--   name.
+applyMatchings :: Integer -> [(Person, Maybe Person, Float)] -> ([Person], Integer)
+applyMatchings nextId ts = foldr go ([], nextId+1) (zip ts [(nextId+1)..])
     where
         maxDist = 100
-        go (p1, p2, s) = if s > maxDist
-                            then p1
-                            -- Close enough, so change.
-                            else setField @"name" (getField @"name" p2) p1
+        go ((p1, Nothing, _), k) (xs, _) = flip (,) k $ setField @"name" (show k) p1 : xs
+        go ((p1, Just p2, s), k) (xs, _) = flip (,) k $ if s > maxDist
+                                                           then setField @"name" (show k) p1 : xs 
+                                                           else setField @"name" (getField @"name" p2) p1 : xs
 
 
 diff :: KeyPoint -> KeyPoint -> Float

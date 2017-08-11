@@ -59,8 +59,8 @@ main = do
 
     let fds :: [FrameData Person]
         fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
-                  frameDatas
-                  -- (drop 500 $ take 2000 frameDatas)
+                  -- frameDatas
+                  (drop 500 $ take 2000 frameDatas)
 
         nums :: [Integer]
         nums = randomRs (0, 100) (mkStdGen 1)
@@ -78,14 +78,17 @@ main = do
         
         -- | We need to update 2 based on 1, 3 based on 2, 4 based on 3,
         --    and so on ...
-        matchedFrames :: [Frame Person]
-        matchedFrames = foldr g [head namedFrames] namedFrames
+        matchedFrames' :: [(Frame Person, Integer)]
+        matchedFrames' = foldr g [(head namedFrames, 1)] namedFrames
             where
                 -- By construction this match will never fail, but it's
                 -- probably bad form and could be cleaned up.
-                g fnp1 fs@(fn:_a) = setField @"people" (applyMatchings (matches fnp1 fn)) fnp1 : fs
+                g fnp1 fs@((fn, nxt):_a) = let (ms, nxt') = applyMatchings nxt (matches fnp1 fn)
+                                            in (setField @"people" ms fnp1, nxt') : fs
+
                 matches a b = matchings (getField @"people" a)
                                         (getField @"people" b)
+        matchedFrames = map fst matchedFrames'
 
     let frames = 
             case filterOpt opts of 
