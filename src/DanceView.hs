@@ -179,27 +179,19 @@ matchings xs ys = updates
                                                   )) fairCombs
 
         updates  = foldl' f [] xs
+        maxDist  = 200
         f xs' p = go (distanceSort (filterDown xs' p)) : xs'
             where
-                go []    = (p, Nothing, 0/0)
-                go (x:_) = x
+                none = (p, Nothing, 0/0)
+                go []                    = none
+                go ((_, Nothing, _):_)   = none
+                go (x@(_, Just  _, s):_) = if s > maxDist 
+                                             then none
+                                             else x
+
 
         filterDown xs' p = filter (\(p1, p2, _) -> p1 == p && p2 `notElem` map (\(_, p', _) -> p') xs') diffs
         distanceSort     = sortBy (\(_, _, d1) (_, _, d2) -> d1 `compare` d2)
-
-
-
--- | Given some matchings, update the names. We will either yield the same
---   person from frame n, or a new name, because they can't keep their old
---   name.
-applyMatchings :: Integer -> [(Person, Maybe Person, Float)] -> ([Person], Integer)
-applyMatchings nextId ts = foldr go ([], nextId+1) (zip ts [(nextId+1)..])
-    where
-        maxDist = 100
-        go ((p1, Nothing, _), k) (xs, _) = flip (,) k $ setField @"name" (show k) p1 : xs
-        go ((p1, Just p2, s), k) (xs, _) = flip (,) k $ if s > maxDist
-                                                           then setField @"name" (show k) p1 : xs 
-                                                           else setField @"name" (getField @"name" p2) p1 : xs
 
 
 diff :: KeyPoint -> KeyPoint -> Float

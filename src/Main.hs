@@ -41,7 +41,6 @@ import           Control.Monad
 import           Options.Generic
 import           Data.Maybe
 import           Data.Aeson
-import           System.Random
 import           System.FilePath
 import           System.FilePath.Find   hiding (directory)
 import           Data.String.Conv       (toS)
@@ -59,36 +58,39 @@ main = do
 
     let fds :: [FrameData Person]
         fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
-                  -- frameDatas
-                  (drop 500 $ take 2000 frameDatas)
-
-        nums :: [Integer]
-        nums = randomRs (0, 100) (mkStdGen 1)
+                  frameDatas
+ 
 
         -- | Munge them into frames with frame numbers.
         frames' :: [Frame Person]
         frames' = zipWith (flip smash . Frame []) [1..] fds
 
-        namePeeps names' = map (\f -> setField @"people" (newPeeps (getField @"people" f)) f)
-            where
-                newPeeps :: [Person] -> [Person]
-                newPeeps = zipWith (setField @"name") names'
 
-        namedFrames = namePeeps (map show nums) frames'
-        
-        -- | We need to update 2 based on 1, 3 based on 2, 4 based on 3,
-        --    and so on ...
-        matchedFrames' :: [(Frame Person, Integer)]
-        matchedFrames' = foldr g [(head namedFrames, 1)] namedFrames
-            where
-                -- By construction this match will never fail, but it's
-                -- probably bad form and could be cleaned up.
-                g fnp1 fs@((fn, nxt):_a) = let (ms, nxt') = applyMatchings nxt (matches fnp1 fn)
-                                            in (setField @"people" ms fnp1, nxt') : fs
+        -- Note: Pattern-match failure if there is not at least 1 frame
+        (frame1:remainingFrames) = frames'
 
-                matches a b = matchings (getField @"people" a)
-                                        (getField @"people" b)
-        matchedFrames = map fst matchedFrames'
+        matchedFrames :: [Frame Person]
+        matchedFrames = map snd $ scanl f (1, frame1) remainingFrames
+            where
+                f :: (Int, Frame Person) -> Frame Person -> (Int, Frame Person)
+                f (counter, prevFrame) curFrame = (counter', newFrame)
+                    where
+                        counter'  = counter + length (getField @"people" curFrame)
+
+                        newPeople :: [Person]
+                        newPeople = zipWith rename matches names
+
+                        rename (p1, Nothing, _) name = setField @"name" (show name) p1
+                        rename (p1, Just p2, _) _    = setField @"name" (getField @"name" p2) p1
+
+                        names     = [counter ..]
+                        matches   = matchings (getField @"people" curFrame)
+                                              (getField @"people" prevFrame)
+
+                        -- Update the people in this frame
+                        newFrame :: Frame Person
+                        newFrame = setField @"people" newPeople curFrame
+
 
     let frames = 
             case filterOpt opts of 
