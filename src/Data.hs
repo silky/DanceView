@@ -30,7 +30,10 @@ data Options' w =
         JsonExport
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
             , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+
+            , sourceDirectory :: w ::: Maybe FilePath     <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath     <?> "Source JSON file."
+
             , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
             , onlySolo        :: w ::: Bool         <?> "Only emit one person per frame."
             , withDepth       :: w ::: Bool         <?> "Also emit the z-coordinate by looking for corresponding Depth data."
@@ -39,7 +42,10 @@ data Options' w =
         | DoGif
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
             , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+
+            , sourceDirectory :: w ::: Maybe FilePath     <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath     <?> "Source JSON file."
+
             , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
             , fps             :: w ::: Float        <?> "Frames per second."
@@ -51,7 +57,10 @@ data Options' w =
         | DoAnimation
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
             , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+
+            , sourceDirectory :: w ::: Maybe FilePath     <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath     <?> "Source JSON file."
+
             , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
             , fps             :: w ::: Float        <?> "Frames per second."
@@ -60,7 +69,10 @@ data Options' w =
         | DoMontage
             { videoWidth      :: w ::: Int          <?> "Video width in pixels."
             , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
+
+            , sourceDirectory :: w ::: Maybe FilePath     <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath     <?> "Source JSON file."
+
             , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
             , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
@@ -90,6 +102,7 @@ data Person = Person
 
 instance ToJSON Person
 
+
 newtype PersonData = PersonData
     { poseKeyPoints :: [Float]
     } deriving (Show, Generic, Eq)
@@ -111,6 +124,7 @@ data KeyPoint = KeyPoint
     } deriving (Show, Generic)
 
 instance ToJSON KeyPoint
+instance FromJSON KeyPoint
 
 
 -- | A collection of keypoints that define a person. We allow
@@ -143,6 +157,9 @@ data Skeleton a = Skeleton
 instance ToJSON (Skeleton KeyPoint)
 instance ToJSON (Skeleton ThreePoint)
 
+instance FromJSON (Skeleton KeyPoint)
+
+
 type Skeleton2D = Skeleton KeyPoint
 type Skeleton3D = Skeleton ThreePoint
 
@@ -159,6 +176,8 @@ data Frame a = Frame
 instance ToJSON (Frame Person)
 instance ToJSON (Frame Skeleton2D)
 instance ToJSON (Frame Skeleton3D)
+
+instance FromJSON (Frame Skeleton2D)
 
 
 -- | Frame data coming out of a pose network.
@@ -182,3 +201,10 @@ data ThreePoint = ThreePoint
     } deriving (Show, Generic)
 
 instance ToJSON ThreePoint
+
+
+-- | Again reading from the OTW "Robot Protocol" (hacked) format.
+-- instance FromJSON (Frame Person) where
+--     parseJSON = withObject "frame" $ \o ->
+--         Frame <$> o .: "people"
+--               <*> o .: "frameNumber"
