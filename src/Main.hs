@@ -76,7 +76,8 @@ main = do
 
         (frame1':remainingFrames') = matchedFrames
         finalFrames = (frame1':remainingFrames')
-        -- TODO: This doesn't work.
+        -- Smoothing doesn't work perfectly because tracking doesn't work
+        -- perfectly. 
         -- finalFrames = scanl forwardFill frame1' remainingFrames'
 
     let frames = 
@@ -112,8 +113,11 @@ getFrames opts = go (sourceDirectory opts) (sourceJson opts)
             frameDatas :: [FrameData PersonData] <- mapM readJson jsonFiles
 
             let fds :: [FrameData Person]
-                fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
-                        frameDatas
+                -- TODO: Cleanup
+                fds = map g frameDatas
+                g fd = FrameData (zipWith (\p k -> smash p (Person [] (show k))) (getField @"people" fd) [1..])
+                -- fds = map (FrameData .  map ((flip smash . Person []) "0") . getField @"people")
+                --         frameDatas
                 
                 -- | Munge them into frames with frame numbers.
                 frames' :: [Frame Person]
