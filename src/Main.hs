@@ -75,7 +75,7 @@ main = do
                         newFrame = setField @"people" newPeople curFrame
 
         (frame1':remainingFrames') = matchedFrames
-        finalFrames = remainingFrames'
+        finalFrames = (frame1':remainingFrames')
         -- TODO: This doesn't work.
         -- finalFrames = scanl forwardFill frame1' remainingFrames'
 
