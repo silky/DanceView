@@ -41,9 +41,10 @@ executables:
       - Animation
       - DanceView
       - Data
+      - DiagramsStuff
       - Gif
       - Montage
-      - DiagramsStuff
+      - Smoothing
 
 
 tests:

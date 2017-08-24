@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards           #-}
-{-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE DataKinds                 #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE PartialTypeSignatures     #-}
@@ -10,7 +9,6 @@ module DiagramsStuff where
 
 import           Data
 import           DanceView
-import           Data.Generics.Record
 import           System.Random
 import           Diagrams.Prelude             hiding (Options, frame, names)
 
@@ -42,8 +40,6 @@ asDiagrams opts colour frame = mconcat [bones, r]
                                 # bg white
 
     where
-        nameKeyPoint p = neck (toSkeleton p)
-
         xy KeyPoint {..} = (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))
 
         keyPoints        = concat (asKeyPoints True frame)

@@ -35,6 +35,7 @@ import           Data
 import           Animation
 import           Gif
 import           Montage
+import           Smoothing
 import           DanceView
 import           Data.Generics.Record
 import           Control.Monad
@@ -91,12 +92,14 @@ main = do
                         newFrame :: Frame Person
                         newFrame = setField @"people" newPeople curFrame
 
+        (frame1':remainingFrames') = matchedFrames
+        finalFrames = scanl forwardFill frame1' remainingFrames'
 
     let frames = 
             case filterOpt opts of 
-              Nothing          -> matchedFrames
-              Just OnlySolo    -> filter onePerson matchedFrames
-              Just TakeLargest -> map takeLargest matchedFrames
+              Nothing          -> finalFrames
+              Just OnlySolo    -> filter onePerson finalFrames
+              Just TakeLargest -> map takeLargest finalFrames
 
     case opts of
       DoAnimation {..} -> doAnimation frames opts
