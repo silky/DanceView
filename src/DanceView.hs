@@ -21,7 +21,6 @@ import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
 
 
--- | TODO: Need to implement this.
 fromSkeleton :: Skeleton2D -> Person
 fromSkeleton Skeleton {..} = Person pkps name
     where
