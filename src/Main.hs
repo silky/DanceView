@@ -15,17 +15,13 @@
 -- TODO: Use "start" and "end" times.
 -- TODO: Body Rotation Options?
 -- TODO: Filter Out Non-Moving People?
---
 -- TODO: Print time
---
 -- TODO: It currently crashes when it ends. We should stop the animation (or
--- loop it) when we run out of time.
---
+--       loop it) when we run out of time.
 -- TODO: If we're going for POAM we need to have a bunch of configurations that
---   let us design a particular item and then emit a file of the right type.
+--       let us design a particular item and then emit a file of the right type.
 --
---   Basically, we need to cut off the thing. Then it works.
---
+--       Basically, we need to cut off the thing. Then it works.
 -- TODO: Visible body-part count filter
 
 module Main where
