@@ -75,7 +75,9 @@ main = do
                         newFrame = setField @"people" newPeople curFrame
 
         (frame1':remainingFrames') = matchedFrames
-        finalFrames = scanl forwardFill frame1' remainingFrames'
+        finalFrames = remainingFrames'
+        -- TODO: This doesn't work.
+        -- finalFrames = scanl forwardFill frame1' remainingFrames'
 
     let frames = 
             case filterOpt opts of 

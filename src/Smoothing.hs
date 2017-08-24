@@ -16,6 +16,7 @@ module Smoothing where
 import           Data
 import           Data.List
 import           Data.Generics.Record
+import Debug.Trace
 
 -- | Given frame_{n} and frame_{n+1}, yield a new frame_{n+1} where
 --   the people have had any joints that were 0 made given the value 
