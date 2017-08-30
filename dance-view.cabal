@@ -1,9 +1,9 @@
--- This file has been generated from package.yaml by hpack version 0.17.1.
+-- This file has been generated from package.yaml by hpack version 0.18.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           dance-view
-version:        0.2.2.0
+version:        0.2.3.2
 description:    Various ways of viewing pose network data
 category:       Web
 homepage:       https://github.com/silky/dance-view#readme
@@ -47,9 +47,10 @@ executable dance-view
       Animation
       DanceView
       Data
+      DiagramsStuff
       Gif
       Montage
-      DiagramsStuff
+      Smoothing
   default-language: Haskell2010
 
 test-suite spec
@@ -89,4 +90,5 @@ test-suite spec
       Main
       Misc
       Montage
+      Smoothing
   default-language: Haskell2010

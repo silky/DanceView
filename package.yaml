@@ -1,5 +1,5 @@
 name:                dance-view
-version:             0.2.2.0
+version:             0.2.3.2
 description:         Various ways of viewing pose network data
 homepage:            https://github.com/silky/dance-view#readme
 license:             BSD3
@@ -41,9 +41,10 @@ executables:
       - Animation
       - DanceView
       - Data
+      - DiagramsStuff
       - Gif
       - Montage
-      - DiagramsStuff
+      - Smoothing
 
 
 tests:
