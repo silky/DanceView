@@ -38,7 +38,7 @@ main = hspec $ do
 
             let matches = matchings [p1] [p1]
 
-            matches `shouldBe` [(p1, p1, 0)]
+            matches `shouldBe` [(p1, Just p1, 0)]
 
 
         it "matches something close from frame to frame" $ do
@@ -46,7 +46,7 @@ main = hspec $ do
                 p2 = Person rawKps2 "b"
 
             let matches         = matchings [p1] [p2]
-                [(p1', p2', _)] = matches
+                [(p1', Just p2', _)] = matches
 
             (p1', p2') `shouldBe` (p1, p2)
 
@@ -63,7 +63,7 @@ main = hspec $ do
 
             forM_ combs $ \(c1, c2) -> do
                 let matches = matchings c1 c2
-                    [(a, b, _), (c, d, _)] = matches 
+                    [(a, Just b, _), (c, Just d, _)] = matches 
 
                 (a, b) `shouldBe` (a, a)
                 (c, d) `shouldBe` (c, c)
