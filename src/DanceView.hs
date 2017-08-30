@@ -21,6 +21,31 @@ import           Data.Generics.Record
 import           Data.List.Split        (chunksOf)
 
 
+fromSkeleton :: Skeleton2D -> Person
+fromSkeleton Skeleton {..} = Person pkps name
+    where
+        keyPoints = [ nose
+                    , neck
+                    , rightShoulder
+                    , rightElbow
+                    , rightWrist
+                    , leftShoulder
+                    , leftElbow
+                    , leftWrist
+                    , rightHip
+                    , rightKnee
+                    , rightAnkle
+                    , leftHip
+                    , leftKnee
+                    , leftAnkle
+                    , rightEye
+                    , leftEye
+                    , rightEar
+                    , leftEar
+                    ]
+        pkps = concatMap (\KeyPoint {..} -> [x,y,score]) keyPoints
+
+
 toSkeleton :: Person -> Skeleton2D
 toSkeleton Person {..} = Skeleton {..}
     where
@@ -276,3 +301,5 @@ sampleFrames quantity inFrames = frames
         totalFrames = length inFrames
         stepSize    = totalFrames `div` quantity
         frames      = [ inFrames !! (k * stepSize) | k <- [0 .. quantity] ]
+
+

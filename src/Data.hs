@@ -28,47 +28,53 @@ instance ParseField Filter
 -- | Non-type safe options. Sad days.
 data Options' w = 
         JsonExport
-            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
-            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
-            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
-            , onlySolo        :: w ::: Bool         <?> "Only emit one person per frame."
-            , withDepth       :: w ::: Bool         <?> "Also emit the z-coordinate by looking for corresponding Depth data."
-            , filterOpt       :: w ::: Maybe Filter <?> "How to filter the results, if at all."
+            { videoWidth      :: w ::: Int            <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int            <?> "Video height in pixels."
+            , sourceDirectory :: w ::: Maybe FilePath <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath <?> "Source JSON file."
+            , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
+            , onlySolo        :: w ::: Bool           <?> "Only emit one person per frame."
+            , withDepth       :: w ::: Bool           <?> "Also emit the z-coordinate by looking for corresponding Depth data."
+            , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
             }
         | DoGif
-            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
-            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
-            , fps             :: w ::: Float        <?> "Frames per second."
-            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
-            , outWidth        :: w ::: Maybe Double <?> "Width of the resulting image."
-            , outHeight       :: w ::: Maybe Double <?> "Height of the resulting image."
-            , filterOpt       :: w ::: Maybe Filter <?> "How to filter the results, if at all."
+            { videoWidth      :: w ::: Int            <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int            <?> "Video height in pixels."
+            , sourceDirectory :: w ::: Maybe FilePath <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath <?> "Source JSON file."
+            , start           :: w ::: Maybe Float    <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float    <?> "Time (in minutes) at which we should end."
+            , fps             :: w ::: Float          <?> "Frames per second."
+            , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
+            , outWidth        :: w ::: Maybe Double   <?> "Width of the resulting image."
+            , outHeight       :: w ::: Maybe Double   <?> "Height of the resulting image."
+            , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
+            , showFrameInfo   :: w ::: Bool           <?> "Should we show frame information?"
             } 
         | DoAnimation
-            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
-            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
-            , fps             :: w ::: Float        <?> "Frames per second."
-            , filterOpt       :: w ::: Maybe Filter <?> "How to filter the results, if at all."
+            { videoWidth      :: w ::: Int            <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int            <?> "Video height in pixels."
+            , sourceDirectory :: w ::: Maybe FilePath <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath <?> "Source JSON file."
+            , start           :: w ::: Maybe Float    <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float    <?> "Time (in minutes) at which we should end."
+            , fps             :: w ::: Float          <?> "Frames per second."
+            , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
             } 
         | DoMontage
-            { videoWidth      :: w ::: Int          <?> "Video width in pixels."
-            , videoHeight     :: w ::: Int          <?> "Video height in pixels."
-            , sourceDirectory :: w ::: FilePath     <?> "Directory in which to find the pose annotation json files."
-            , start           :: w ::: Maybe Float  <?> "Time (in minutes) at which we should start."
-            , end             :: w ::: Maybe Float  <?> "Time (in minutes) at which we should end."
-            , outFile         :: w ::: FilePath     <?> "Name of the file that we output."
-            , rows            :: w ::: Int          <?> "Number of rows in the resulting grid."
-            , columns         :: w ::: Int          <?> "Number of columns in the resulting grid."
-            , outWidth        :: w ::: Maybe Double <?> "Width of the resulting image."
-            , outHeight       :: w ::: Maybe Double <?> "Height of the resulting image."
-            , filterOpt       :: w ::: Maybe Filter <?> "How to filter the results, if at all."
+            { videoWidth      :: w ::: Int            <?> "Video width in pixels."
+            , videoHeight     :: w ::: Int            <?> "Video height in pixels."
+            , sourceDirectory :: w ::: Maybe FilePath <?> "Directory in which to find the pose annotation json files."
+            , sourceJson      :: w ::: Maybe FilePath <?> "Source JSON file."
+            , start           :: w ::: Maybe Float    <?> "Time (in minutes) at which we should start."
+            , end             :: w ::: Maybe Float    <?> "Time (in minutes) at which we should end."
+            , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
+            , rows            :: w ::: Int            <?> "Number of rows in the resulting grid."
+            , columns         :: w ::: Int            <?> "Number of columns in the resulting grid."
+            , outWidth        :: w ::: Maybe Double   <?> "Width of the resulting image."
+            , outHeight       :: w ::: Maybe Double   <?> "Height of the resulting image."
+            , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
+            , showFrameInfo   :: w ::: Bool           <?> "Should we show frame information?"
             }
         deriving (Generic)
 
@@ -89,6 +95,7 @@ data Person = Person
     } deriving (Show, Generic, Eq)
 
 instance ToJSON Person
+
 
 newtype PersonData = PersonData
     { poseKeyPoints :: [Float]
@@ -111,6 +118,7 @@ data KeyPoint = KeyPoint
     } deriving (Show, Generic)
 
 instance ToJSON KeyPoint
+instance FromJSON KeyPoint
 
 
 -- | A collection of keypoints that define a person. We allow
@@ -143,6 +151,9 @@ data Skeleton a = Skeleton
 instance ToJSON (Skeleton KeyPoint)
 instance ToJSON (Skeleton ThreePoint)
 
+instance FromJSON (Skeleton KeyPoint)
+
+
 type Skeleton2D = Skeleton KeyPoint
 type Skeleton3D = Skeleton ThreePoint
 
@@ -159,6 +170,8 @@ data Frame a = Frame
 instance ToJSON (Frame Person)
 instance ToJSON (Frame Skeleton2D)
 instance ToJSON (Frame Skeleton3D)
+
+instance FromJSON (Frame Skeleton2D)
 
 
 -- | Frame data coming out of a pose network.
