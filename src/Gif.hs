@@ -14,6 +14,7 @@ module Gif where
 import           Data
 import           DanceView
 import           DiagramsStuff
+import           DiagramsDesigns
 import           Diagrams.Prelude             hiding (Options)
 import           Diagrams.Backend.Rasterific  hiding (Options)
 
@@ -25,6 +26,6 @@ doGif allFrames opts = do
 
     let frames   = sampleFrames (length allFrames `div` 3) allFrames
     let cs       = randColours 3
-        diagrams = zipWith (flip (asDiagrams opts)) frames cs
+        diagrams = zipWith (flip (montageSingle opts)) frames cs
 
     animatedGif (outFile opts) outSize LoopingForever delay diagrams

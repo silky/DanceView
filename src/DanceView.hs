@@ -140,7 +140,7 @@ keyPointPaths cleanup includePelvis Skeleton {..} =
         rightLeg  = [hipJointPoint, rightHip, rightKnee, rightAnkle]
         leftLeg   = [hipJointPoint, leftHip, leftKnee, leftAnkle]
 
-        -- Drop any zero-score elements
+        -- Drop any zero-score elements and anything that follows
         op        = if cleanup then dropEmpty else id
         dropEmpty = takeWhile (\(KeyPoint _ _ s) -> (s /= 0.0))
 

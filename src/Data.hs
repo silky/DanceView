@@ -61,7 +61,7 @@ data Options' w =
             , fps             :: w ::: Float          <?> "Frames per second."
             , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
             } 
-        | DoMontage
+        | DoImage
             { videoWidth      :: w ::: Int            <?> "Video width in pixels."
             , videoHeight     :: w ::: Int            <?> "Video height in pixels."
             , sourceDirectory :: w ::: Maybe FilePath <?> "Directory in which to find the pose annotation json files."
@@ -69,14 +69,25 @@ data Options' w =
             , start           :: w ::: Maybe Float    <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float    <?> "Time (in minutes) at which we should end."
             , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
-            , rows            :: w ::: Int            <?> "Number of rows in the resulting grid."
-            , columns         :: w ::: Int            <?> "Number of columns in the resulting grid."
+            -- TODO: Maybe insanity
+            , rows            :: w ::: Maybe Int      <?> "Number of rows in the resulting grid."
+            , columns         :: w ::: Maybe Int      <?> "Number of columns in the resulting grid."
             , outWidth        :: w ::: Maybe Double   <?> "Width of the resulting image."
             , outHeight       :: w ::: Maybe Double   <?> "Height of the resulting image."
             , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
             , showFrameInfo   :: w ::: Bool           <?> "Should we show frame information?"
+            , style           :: w ::: ImageStyle     <?> "Style of image we should output."
             }
         deriving (Generic)
+
+
+data ImageStyle = Montage -- ^ The one from the T-Shirt
+                | Fractal
+                deriving (Show, Generic, Eq, Read)
+
+instance ParseFields ImageStyle
+instance ParseField  ImageStyle
+instance ParseRecord ImageStyle
 
 type Options = Options' Unwrapped
 

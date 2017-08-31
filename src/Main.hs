@@ -31,7 +31,7 @@ module Main where
 import           Data
 import           Animation
 import           Gif
-import           Montage
+import           Image
 import           Smoothing
 import           DanceView
 import           Data.Generics.Record
@@ -88,9 +88,16 @@ main = do
 
     case opts of
       DoAnimation {..} -> doAnimation frames opts
-      DoMontage   {..} -> doMontage   frames opts
+      DoImage     {..} -> doImage     frames opts
       DoGif       {..} -> doGif       frames opts
       JsonExport  {..} -> jsonExport  frames opts
+
+
+doImage :: [Frame Person] -> Options -> IO ()
+doImage frames opts =
+    case style opts of
+      Montage -> doMontage frames opts
+      Fractal -> doFractal frames opts   
 
 
 getFrames :: Options -> IO [Frame Person]

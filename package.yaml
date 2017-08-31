@@ -40,9 +40,10 @@ executables:
       - Animation
       - DanceView
       - Data
+      - DiagramsDesigns
       - DiagramsStuff
       - Gif
-      - Montage
+      - Image
       - Smoothing
 
 

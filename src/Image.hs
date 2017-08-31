@@ -9,29 +9,43 @@
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 
-module Montage where
+module Image where
 
 import           Data
 import           DanceView
+import           DiagramsDesigns
 import           DiagramsStuff
 import           Data.List.Split        (divvy)
 import           Diagrams.Prelude       hiding (Options)
 import           Diagrams.Backend.Cairo
         
+
 -- 35 inches = 3360 px
 -- 20 inches = 1920 px
 
 doMontage :: [Frame Person] -> Options -> IO ()
 doMontage allFrames opts = do
-    let frames  = sampleFrames (rows opts * columns opts) allFrames
- 
-    -- | Convert the frames into a convient row & column based rendering
-    let seed     = 3
-        diagrams = zipWith (flip (asDiagrams opts)) frames (randColours seed)
-        gridded  = divvy (columns opts) (columns opts) diagrams
-        joined   = vcat (map hcat gridded)
+    let frames     = sampleFrames (rows' * cols') allFrames
+        seed       = 3
+        diagrams   = zipWith (flip (montageSingle opts)) frames (randColours seed)
+        Just cols' = columns opts
+        Just rows' = rows opts
+        gridded    = divvy (cols') (cols') diagrams
+        joined     = vcat (map hcat gridded)
 
     let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
         diagram = joined
+
+    renderCairo (outFile opts) outSize diagram
+
+
+-- |
+doFractal :: [Frame Person] -> Options -> IO ()
+doFractal allFrames opts = do
+    -- let frames  = sampleFrames 3 allFrames
+    let frames  = sampleFrames (min 20 (length allFrames)) allFrames
+ 
+    let diagram = fractal opts frames
+        outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
 
     renderCairo (outFile opts) outSize diagram

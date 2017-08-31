@@ -46,9 +46,10 @@ executable dance-view
       Animation
       DanceView
       Data
+      DiagramsDesigns
       DiagramsStuff
       Gif
-      Montage
+      Image
       Smoothing
   default-language: Haskell2010
 
@@ -84,10 +85,11 @@ test-suite spec
       Animation
       DanceView
       Data
+      DiagramsDesigns
       DiagramsStuff
       Gif
+      Image
       Main
       Misc
-      Montage
       Smoothing
   default-language: Haskell2010

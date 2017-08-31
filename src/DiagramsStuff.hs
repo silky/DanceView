@@ -5,7 +5,6 @@
 {-# LANGUAGE PartialTypeSignatures     #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
-
 module DiagramsStuff where
 
 import           Data
@@ -32,10 +31,11 @@ randColours seed = map (colours !!) $ randomRs (0, len) (mkStdGen seed)
 
 -- | Returns labels on top of the people, and write data about
 --   the frame on the picture itself.
-frameInfo :: _ => Options
-               -> Frame Person
-               -> V2 Double
-               -> QDiagram b V2 Double Any
+frameInfo :: _
+          => Options
+          -> Frame Person
+          -> V2 Double
+          -> QDiagram b V2 Double Any
 frameInfo opts frame reasonableOrigin = mconcat [info, names]
     where
         peeps = getField @"people" frame
@@ -62,43 +62,6 @@ frameInfo opts frame reasonableOrigin = mconcat [info, names]
                          # translate reasonableOrigin
 
 
--- INSANITY! We use partial type signatures so that we don't need to require
--- anything of 'b' until "just in time".
-asDiagrams :: _ => Options 
-                -> Colour Double 
-                -> Frame Person 
-                -> QDiagram b V2 Double Any
-asDiagrams opts colour frame = mconcat [bones, r, info]
-                                # pad 1.0
-                                # lwG 5
-                                # bg white
-
-    where
-        keyPoints = concat (asKeyPoints True frame)
-        points    = (map . map) (xy opts) keyPoints
-        edges     = concatMap (\xs -> zip xs (tail xs)) points
-
-        bones =  mconcat [ fromVertices [ p2 p, p2 q ] | (p,q) <- edges ]
-                         # lc colour
-                         # lineCap  LineCapRound
-                         # lineJoin LineJoinRound
-                         # (if showFrameInfo opts 
-                               then translate reasonableOrigin
-                               else centerXY
-                           )
-
-        info = if showFrameInfo opts
-                  then frameInfo opts frame reasonableOrigin
-                  else mempty
-
-        reasonableOrigin = r2 (- (w / 2), - (h / 2))
-
-        -- Encase the thing in a region as large as the
-        -- original video, with some buffer for no particular reason.
-        
-        w = fromIntegral (videoWidth  opts) + 100
-        h = fromIntegral (videoHeight opts) + 100
-        r = phantom (rect w h :: D V2 Double)
 
 
 xy :: Fractional a => Options -> KeyPoint -> (a, a)
