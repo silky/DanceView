@@ -34,6 +34,7 @@ data Options' w =
             , sourceJson      :: w ::: Maybe FilePath <?> "Source JSON file."
             , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
             , onlySolo        :: w ::: Bool           <?> "Only emit one person per frame."
+            , fps             :: w ::: Float          <?> "Frames per second."
             , withDepth       :: w ::: Bool           <?> "Also emit the z-coordinate by looking for corresponding Depth data."
             , filterOpt       :: w ::: Maybe Filter   <?> "How to filter the results, if at all."
             }
@@ -69,7 +70,7 @@ data Options' w =
             , start           :: w ::: Maybe Float    <?> "Time (in minutes) at which we should start."
             , end             :: w ::: Maybe Float    <?> "Time (in minutes) at which we should end."
             , outFile         :: w ::: FilePath       <?> "Name of the file that we output."
-            -- TODO: Maybe insanity
+            , fps             :: w ::: Float          <?> "Frames per second."
             , rows            :: w ::: Maybe Int      <?> "Number of rows in the resulting grid."
             , columns         :: w ::: Maybe Int      <?> "Number of columns in the resulting grid."
             , outWidth        :: w ::: Maybe Double   <?> "Width of the resulting image."
