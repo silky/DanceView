@@ -15,7 +15,7 @@ import           Data
 import           DanceView
 import           DiagramsStuff
 import           DiagramsDesigns
-import           Diagrams.Prelude             hiding (Options)
+import           Diagrams.Prelude             hiding (Options, each)
 import           Diagrams.Backend.Rasterific  hiding (Options)
 
 
@@ -24,8 +24,10 @@ doGif allFrames opts = do
     let outSize = mkSizeSpec $ V2 (outWidth opts) (outHeight opts)
         delay   = round $ fps opts
 
-    let frames   = sampleFrames (length allFrames `div` 3) allFrames
-    let cs       = randColours 3
+    let frames   = each 2 allFrames
+        cs       = cycle [black]
         diagrams = zipWith (flip (montageSingle opts)) frames cs
 
     animatedGif (outFile opts) outSize LoopingForever delay diagrams
+
+

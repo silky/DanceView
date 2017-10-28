@@ -89,9 +89,10 @@ main = do
 
     let frames = 
             case filterOpt opts of 
-              Nothing          -> finalFrames
-              Just OnlySolo    -> filter onePerson finalFrames
-              Just TakeLargest -> map takeLargest finalFrames
+              Nothing                 -> finalFrames
+              Just OnlySolo           -> filter onePerson finalFrames
+              Just TakeLargest        -> map takeLargest finalFrames
+              Just (AtLeastKJoints k) -> map (atLeastKJoints k) finalFrames
 
     case opts of
       DoAnimation {..} -> doAnimation frames opts

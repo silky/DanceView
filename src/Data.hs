@@ -21,6 +21,7 @@ import           Data.Aeson
 
 data Filter = OnlySolo
             | TakeLargest
+            | AtLeastKJoints Int 
             deriving (Show, Read, Generic)
 
 instance ParseField Filter
@@ -82,8 +83,9 @@ data Options' w =
         deriving (Generic)
 
 
-data ImageStyle = Montage -- ^ The one from the T-Shirt
+data ImageStyle = Montage   -- ^ The one from the T-Shirt
                 | Fractal
+                | RotoScope -- ^ The one from the cool "Ballet Rotoscope" video.
                 deriving (Show, Generic, Eq, Read)
 
 instance ParseFields ImageStyle

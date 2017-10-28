@@ -15,15 +15,16 @@ dependencies:
   - bytestring
   - containers
   - diagrams
-  - diagrams-lib
-  - diagrams-svg
   - diagrams-cairo
   - diagrams-contrib
+  - diagrams-lib
   - diagrams-rasterific
-  - filepath
+  - diagrams-svg
   - filemanip
+  - filepath
   - generic-lens
   - gloss
+  - lens
   - optparse-generic
   - random
   - split
@@ -31,20 +32,31 @@ dependencies:
   - text
 
 
+ghc-options:      
+    -threaded -Wall -O2
+
+
 executables:
-  dance-view:
-    ghc-options:      -threaded -Wall -O2
-    source-dirs:      src
-    main:             Main.hs
-    other-modules:    
-      - Animation
-      - DanceView
-      - Data
-      - DiagramsDesigns
-      - DiagramsStuff
-      - Gif
-      - Image
-      - Smoothing
+    dance-view:
+        source-dirs:      src
+        main:             Main.hs
+        other-modules:    
+            - Animation
+            - DanceView
+            - Data
+            - DiagramsDesigns
+            - DiagramsStuff
+            - Gif
+            - Image
+            - Smoothing
+
+    gradient-design:
+        source-dirs: src
+        main: GradientMain.hs
+        other-modules:
+            - DanceView
+            - Data
+            - DiagramsStuff
 
 
 tests:

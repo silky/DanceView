@@ -279,27 +279,22 @@ takeLargest frame@Frame {..} = newFrame (getField @"people" frame)
         biggest a b = area a `compare` area b
 
 
+atLeastKJoints :: Int -> Frame Person -> Frame Person
+atLeastKJoints k frame@Frame {..} = newFrame (getField @"people" frame)
+        where
+            newFrame ps = setField @"people" (filter (atLeast k) ps) frame
+
+            atLeast :: Int -> Person -> Bool
+            atLeast k p = length (filter id (g0 p)) >= k
+
+            g0 :: Person -> [Bool]
+            g0 p = map (\(KeyPoint _ _ s) -> s /= 0) (toList (toSkeleton p))
+
+
 -- | Require that each frame has exactly one person.
 onePerson :: Frame Person -> Bool
 onePerson f = length (getField @"people" f) == 1
 
 
-
--- | We are given a big bunch of frames; say N. We would like
---   to evenly sample `m` frames from this set. We will just 
---   divide N by k and take every kth element.
---
---   [0, k*(N/m), ... | k <- [0..m]]
---
---  e.g. k = 2
---
---   [0, N/2]
---
-sampleFrames :: Int -> [Frame Person] -> [Frame Person]
-sampleFrames quantity inFrames = frames
-    where
-        totalFrames = length inFrames
-        stepSize    = totalFrames `div` quantity
-        frames      = [ inFrames !! (k * stepSize) | k <- [0 .. quantity] ]
-
-
+each :: Int -> [a] -> [a]
+each n = map head . takeWhile (not . null) . iterate (drop (max 1 n))

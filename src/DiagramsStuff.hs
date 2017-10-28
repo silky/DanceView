@@ -65,4 +65,5 @@ frameInfo opts frame reasonableOrigin = mconcat [info, names]
 
 
 xy :: Fractional a => Options -> KeyPoint -> (a, a)
-xy opts KeyPoint {..} = (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))
+xy opts KeyPoint {..} = (realToFrac (round x), realToFrac (videoHeight opts - round y))
+-- xy opts KeyPoint {..} = (realToFrac x, realToFrac (fromIntegral (videoHeight opts) - y))
