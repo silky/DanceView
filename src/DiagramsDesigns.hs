@@ -37,14 +37,17 @@ montageSingle :: _ => Options
 montageSingle opts colour frame = mconcat [bones', r, info]
                                     # pad 1.0
                                     # lwG 5
-                                    # bg white
+                                    -- # bg whitesmoke
 
     where
-        bones' = bones opts frame # lc colour
+        bones' = bones'' # centerXY <> circle 400 # fc whitesmoke # centerXY # lw none
+        bones'' = bones opts frame -- # lc colour
+                                  # lc darkgrey
                                   # (if showFrameInfo opts 
                                         then translate reasonableOrigin
                                         else centerXY
                                     )
+
 
         info   = if showFrameInfo opts
                     then frameInfo opts frame reasonableOrigin
@@ -55,8 +58,8 @@ montageSingle opts colour frame = mconcat [bones', r, info]
         -- Encase the thing in a region as large as the
         -- original video, with some buffer for no particular reason.
         
-        w = fromIntegral (videoWidth  opts) + 100
-        h = fromIntegral (videoHeight opts) + 100
+        w = 1.2 * fromIntegral (videoWidth  opts) + 100
+        h = 1.2 * fromIntegral (videoHeight opts) + 100
         r = phantom (rect w h :: D V2 Double)
 
 
